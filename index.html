@@ -225,7 +225,7 @@ h1 .acc { color: var(--accel); }
           <label for="time">時間</label>
           <input type="range" id="time" min="0" max="1000" value="0" aria-label="時間">
         </div>
-        <label class="toggle" for="auto"><input type="checkbox" id="auto"> 自動で進む</label>
+        <label class="toggle" for="auto"><input type="checkbox" id="auto" checked> 自動で進む</label>
         <button type="button" class="btn" id="fs" hidden>全画面</button>
       </div>
     </div>
@@ -828,6 +828,7 @@ function loop(ts) {
   draw(dt);
   requestAnimationFrame(loop);
 }
+if (reduced) $('auto').checked = false;
 const m0 = /^#scene([1-5])$/.exec(location.hash || '');
 goScene(m0 ? Number(m0[1]) - 1 : 0);
 requestAnimationFrame(loop);
