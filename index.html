@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>螺旋的適応モデル</title>
-<meta name="description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして螺旋。5つの場面と動かせる図で示す「螺旋的適応モデル」。">
+<meta name="description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして普及の螺旋。">
 <!-- リンクカード（note・SNSで共有したときの表示） -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="螺旋的適応モデル｜AIの社会実装は、加速と減速を繰り返しながらも着実に進む">
-<meta property="og:description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして螺旋。5つの場面と動かせる図で示す「螺旋的適応モデル」。">
+<meta property="og:description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして普及の螺旋。">
 <meta property="og:url" content="https://bigtree-daiki.github.io/AI-spiral-adaptation-model/">
 <meta property="og:image" content="https://bigtree-daiki.github.io/AI-spiral-adaptation-model/ogp.png">
 <meta property="og:locale" content="ja_JP">
@@ -127,14 +127,14 @@ h1 .acc { color: var(--accel); }
 .phase-now { white-space: nowrap; font-size: 24px; font-weight: 900; line-height: 1.3; min-height: 1.3em; transition: color .3s; }
 /* 場面2：世論の振り子を強調 */
 .pend-area.focus { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accel) 50%, var(--brake)); }
-.panel.focus, .pend-area.focus { background: color-mix(in srgb, var(--accel-soft) 50%, var(--brake-soft)); border-color: color-mix(in srgb, var(--accel) 50%, var(--brake)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accel) 22%, transparent), 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent); }
+.panel.focus, .pend-area.focus { background: color-mix(in srgb, var(--accel-soft) 50%, var(--brake-soft)); border-color: color-mix(in srgb, var(--accel) 50%, var(--brake)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accel-soft) 40%, var(--brake-soft)); }
 .panel.focus h3, .pend-area.focus h3 { color: var(--ink); }
 .pend-area.focus { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accel) 50%, var(--brake)); }
 
 /* 一周の流れ：加速 → ブレーキ → 適応 →（再加速へ） */
 .cycle { display: grid; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr); align-items: stretch; }
 .cycle .arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 18px; font-weight: 900; }
-.col { --c: var(--accel); --soft: var(--accel-soft); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; opacity: .6; transition: opacity .35s, background .35s, border-color .35s, box-shadow .35s; min-width: 0; }
+.col { --c: var(--accel); --soft: var(--accel-soft); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; opacity: .6; transition: opacity .35s, background .35s, border-color .35s, box-shadow .35s; }
 .col.brake { --c: var(--brake); --soft: var(--brake-soft); }
 .col.adapt { --c: color-mix(in srgb, var(--accel) 50%, var(--brake)); --soft: color-mix(in srgb, var(--accel-soft) 50%, var(--brake-soft)); }
 .col.on { opacity: 1; background: var(--soft); border-color: color-mix(in srgb, var(--c) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 14%, transparent); }
@@ -160,7 +160,7 @@ h1 .acc { color: var(--accel); }
 .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 .btn:disabled { opacity: .4; cursor: default; }
 .dots { display: flex; gap: 6px; }
-.dots button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; }
+.dots button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .dots button[aria-current="step"] { background: var(--accel); border-color: var(--accel); color: #fff; }
 .timeline { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 0; }
 .timeline label { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
@@ -265,28 +265,28 @@ h1 .acc { color: var(--accel); }
     <div class="col accel" id="colAccel">
       <div class="col-head"><h3>加速・再加速の要因（例）</h3></div>
       <ul class="factors">
-        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M3 20a5 5 0 0 1 10 0"/><circle cx="17" cy="15" r="2.5"/><path d="M17 10.5v1.5M17 18v1.5M21.5 15H20M14 15h-1.5"/></svg><span class="t">人手不足と複雑化への対処</span><span class="s">減りゆく人手で、複雑になった社会を回し続ける</span></li>
-        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span class="t">成長の追求</span><span class="s">生産性を引き上げ、新しい需要を生み出す</span></li>
-        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/><path d="M11 8v6M8 11h6"/></svg><span class="t">未知の領域への挑戦</span><span class="s">人の認知が届かない科学の難問を解く</span></li>
-        <li data-k="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="t">止まれない・戻れない</span><span class="s">他者が使う限り降りられず（囚人のジレンマ）、一度慣れた便利さは手放せない（ラチェット効果）</span></li>
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 10 0"/><path d="M13 7a5 5 0 0 1 8 0"/><path d="M15 18h7"/></svg><span class="t">需要の増加</span><span class="s">実装が人手不足や業務負荷に追いつかないと、導入が加速する。</span></li>
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span class="t">成果の見える化</span><span class="s">業務改善が目に見えると、より多くの部門が同じ方向へ追随する。</span></li>
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.5-3.5"/></svg><span class="t">新しい利用が見つかる</span><span class="s">個別の成功事例が、別の現場へと連鎖していく。</span></li>
+        <li data-k="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></svg><span class="t">定着・ロックイン</span><span class="s">使い慣れたワークフローや既存基盤に乗ると、止めにくくなる。</span></li>
       </ul>
     </div>
     <div class="arrow" aria-hidden="true">→</div>
     <div class="col brake" id="colBrake">
       <div class="col-head"><h3>ブレーキがかかる要因（例）</h3></div>
       <ul class="factors">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の奪い合い</span><span class="s">データセンターの電力や冷却水が、家庭の電気や農業・生活用水と競合する</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="1.5"/><path d="M6 8V5h13v12h-3"/><path d="M6 12h7M6 16h5"/></svg><span class="t">量的爆発による混乱</span><span class="s">AIが生む申請・取引・攻撃が、社会の処理能力を超える</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 21v-3h2a2 2 0 0 0 2-2v-2.5l1.6-.7a.6.6 0 0 0 .2-.9L19 9a7 7 0 1 0-12 5v7"/><path d="M9.5 10.5c.8-.8 1.7-.8 2.5 0s1.7.8 2.5 0"/></svg><span class="t">社会文化的な反発</span><span class="s">急進的なAI依存が、人間の発達や社会的関係を損なう</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の制約</span><span class="s">インフラの限界が、導入ペースを落とす。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="1.5"/><path d="M6 8V5h13v12h-3"/><path d="M7 12h7"/></svg><span class="t">制度や監査</span><span class="s">安全性や説明責任の要求が、普及の速度を抑える。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 21v-3h2a2 2 0 0 0 2-2v-2.5l1.6-.7a.6.6 0 0 0 .2-1.1l-1.8-1.3V8.4a2.4 2.4 0 0 0-2.4-2.4H9.1A4.1 4.1 0 0 0 5 10.1V12a2 2 0 0 0 2 2h2v3"/><path d="M6 21v-3"/></svg><span class="t">信頼の揺らぎ</span><span class="s">失敗事例や誤解が広がると、社会的な反発が起きる。</span></li>
       </ul>
     </div>
     <div class="arrow" aria-hidden="true">→</div>
     <div class="col adapt" id="colAdapt">
       <div class="col-head"><h3>適応の経路</h3><span class="loop">↺ 再加速へ</span></div>
       <ul class="factors">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span class="t">技術進展による効率化</span><span class="s">小型化・省電力化で、負荷そのものを下げる</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></svg><span class="t">規制強化・ルール整備</span><span class="s">制度によって、使い方に枠をはめる</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg><span class="t">社会の慣れによる受容</span><span class="s">好・悪両面の影響を、新たな常態として受け入れる</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M18 9h4M2 15h4M18 15h4"/></svg><span class="t">運用ルールの整備</span><span class="s">使い方や責任の境界が明確になると、再導入が進む。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 3 4h12a3 3 0 0 0 3-4l-3-7"/></svg><span class="t">制度と慣れ</span><span class="s">教育と運用の定着が、技術の使い勝手を大きく改善する。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg><span class="t">改善の回転</span><span class="s">失敗から学んだ設計が、次の加速を支える基盤になる。</span></li>
       </ul>
     </div>
   </section>
@@ -295,6 +295,7 @@ h1 .acc { color: var(--accel); }
 </div>
 
 <script>
+(() => {
 /* ========= モデル：普及の軌道 =========
    u：周回の位置（1周＝1.0）。f(u)=u+a·sin(2πu) が普及の深さ。
    山の直後に一時的に下がり、谷は必ず前の山より高い。 */
@@ -328,7 +329,7 @@ function phaseAt(u) {
   if (fr >= 0.5 && fr < AD) return 'adapt';
   return u < AD ? 'accel' : 'reaccel';
 }
-const PHASE_DESC = { accel: '実装が広がり、普及が進む', brake: '反発と規制で、普及が一時後退する', adapt: '技術・制度・慣れで立て直す', reaccel: 'もう戻れないまま、再び普及が進む' };
+const PHASE_DESC = { accel: '実装が広がり、普及が進む', brake: '反発と規制で、普及が一時後退する', adapt: '技術・制度・慣れで立て直す', reaccel: '再び加速が始まり、社会実装が進む' };
 const PHASE_LABEL = { accel: '加速', reaccel: '再加速', brake: 'ブレーキ（摩擦）', adapt: '適応（立て直し）' };
 /** 世論：+1＝恩恵論、−1＝脅威論 */
 const opinionAt = u => Math.cos(2 * Math.PI * u);
@@ -429,11 +430,11 @@ const SCENES = [
     enter() { setView('time', 0.8); S.showCurve = false; S.futX = 0; S.fut = 0; tween(S, { futA: 1, ref: 0 }, 0.4); tween(S, { fut: 1 }, 2.4, 0.3); S.pendMode = 'rest';
       // 未来像を描き終えたら、世論の振り子へ注目を移す
       steps = [
-        { at: 6.5, fn() { S.pendMode = 'swing'; S.pendT = 0; $('pendPanel').classList.add('focus'); tween(S, { futA: 0.55 }, 0.6);
+        { at: 6.5, fn() { S.pendMode = 'swing'; S.pendT = 0; $('#pendPanel').classList.add('focus'); tween(S, { futA: 0.55 }, 0.6);
           setCap('世論は恩恵論と脅威論の間を振り子のように行き来しており、どちらか一方に落ち着くことはない。'); } },
       ]; } },
   { title: '実際の軌道', dur: PLAY_TOTAL + 1.5,
-    cap: '人手不足や成長の要請に押されて、AIの実装は加速する。だが世論が脅威論に振れるとブレーキがかかり、普及は一時的に後退する。それでも技術進展や規制強化、あるいは単なる受容といった適応過程を経て、再び加速する。',
+    cap: '人手不足や成長の要請に押されて、AIの実装は加速する。だが世論が脅威論に振れるとブレーキがかかり、普及は一時的に後退する。それでも、前の山より上で底打ちし、また上へ進む。',
     enter() { setView('time', 0.8); S.showCurve = true; S.futX = 1; tween(S, { fut: 1, futA: 0.4 }, 0.6); S.ref = 0; S.head = U0; playHead(PLAY_SEC, 0.6); S.pendMode = 'head'; } },
   { title: '巻き取ると、螺旋になる', dur: 5,
     cap: '時間に沿って伸ばした軌道を巻き取ると、下から上へ回りながら昇る螺旋が現れる。',
@@ -445,18 +446,22 @@ const SCENES = [
     enter() { S.showCurve = true; S.pendMode = 'head'; pauseHead(); finishHead(); setView('top', 2.2); showNote('top');
       steps = [
         { at: 4.4, fn() { setView('side', 2.0); showNote('side'); setCap('真横から見ると、一周ごとに確実に高くなっている。'); } },
-        { at: 8.6, fn() { setView('oblique', 1.8); showNote('oblique', '加速と減速を繰り返しながら、着実に進む'); setCap('二つの顔を合わせると、「加速と減速を繰り返しながらも着実に進む」姿になる。'); } },
+        { at: 8.6, fn() { setView('oblique', 1.8); showNote('oblique', '加速と減速を繰り返しながら、着実に進む'); setCap('二つの顔を合わせると、「加速と減速を繰り返しながら、着実に進む」という実感が見えてくる。'); } },
       ]; } },
   { title: '自分で動かして確かめる', dur: 0,
     cap: '「時間で展開」では、曲線上の点を左右にドラッグして時間を動かせる。「真上から」「真横から」の図はドラッグで回せる。',
     enter() { S.showCurve = true; S.pendMode = 'head'; S.explore = true; pauseHead(); tween(S, { head: U0 + 0.12 }, 0.8); setView('time', 1); showNote('time'); } },
 ];
 
-const $ = id => document.getElementById(id);
+const $ = id => {
+  const cache = $._cache || ($._cache = new Map());
+  if (!cache.has(id)) cache.set(id, document.getElementById(id));
+  return cache.get(id);
+};
 let capTimer = 0;
-/** 説明文を差し替え、少し遅らせて一文字ずつ表示する。「」で囲んだ語にはマーカーを引く */
+/** 説明文を差し替え、少し遅らせて一文字ずつ表示する。「」��囲んだ語にはマーカーを引く */
 function setCap(t, delay = 450) {
-  const el = $('sceneCap');
+  const el = $('#sceneCap');
   el.classList.remove('show');
   el.textContent = '';
   let i = 0, inMark = null;
@@ -473,31 +478,31 @@ function setCap(t, delay = 450) {
   capTimer = setTimeout(() => el.classList.add('show'), reduced ? 0 : delay);
 }
 function showNote(view, override) {
-  const v = VIEWS[view]; $('noteK').textContent = v.k; $('noteV').textContent = override || v.v; $('note').hidden = false;
+  const v = VIEWS[view]; $('#noteK').textContent = v.k; $('#noteV').textContent = override || v.v; $('#note').hidden = false;
 }
 function goScene(i) {
   i = clamp(i, 0, SCENES.length - 1);
-  S.scene = i; S.sceneT = 0; steps = []; S.explore = false; $('note').hidden = true;
+  S.scene = i; S.sceneT = 0; steps = []; S.explore = false; $('#note').hidden = true;
   const sc = SCENES[i];
-  $('sceneNo').textContent = `場面 ${i + 1} / ${SCENES.length}`;
-  const st = $('sceneTitle'); st.textContent = sc.title; st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');
+  $('#sceneNo').textContent = `場面 ${i + 1} / ${SCENES.length}`;
+  const st = $('#sceneTitle'); st.textContent = sc.title; st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');
   setCap(sc.cap);
   sc.enter();
   if (reduced) { tweens.forEach(t => { t.obj[t.k] = t.to; }); tweens = []; steps.forEach(s => s.fn()); steps = []; S.playing = false; }
-  $('stage').classList.toggle('explore', S.explore);
-  $('views').hidden = !S.explore; $('hint').hidden = !S.explore;
-  [...$('dots').children].forEach((b, k) => b.setAttribute('aria-current', k === i ? 'step' : 'false'));
-  $('pendPanel').classList.remove('focus');
-  $('prev').disabled = i === 0; $('next').disabled = i === SCENES.length - 1;
-  const timeOn = i >= 1; $('time').disabled = !timeOn; $('play').disabled = !timeOn;
+  $('#stage').classList.toggle('explore', S.explore);
+  $('#views').hidden = !S.explore; $('#hint').hidden = !S.explore;
+  [...$('#dots').children].forEach((b, k) => b.setAttribute('aria-current', k === i ? 'step' : 'false'));
+  $('#pendPanel').classList.remove('focus');
+  $('#prev').disabled = i === 0; $('#next').disabled = i === SCENES.length - 1;
+  const timeOn = i >= 1; $('#time').disabled = !timeOn; $('#play').disabled = !timeOn;
   syncViews(); syncPlay();
   try { history.replaceState(null, '', '#scene' + (i + 1)); } catch (e) {}
 }
 
 /* ========= 描画 ========= */
-const cv = $('cv'), ctx = cv.getContext('2d');
+const cv = $('#cv'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
-let C = {};
+const C = {};
 const FONT = '"Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif';
 function hex(c) { c = c.trim().replace('#', ''); if (c.length === 3) c = [...c].map(x => x + x).join(''); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16)); }
 function readColors() {
@@ -505,7 +510,12 @@ function readColors() {
   for (const k of ['stage', 'ink', 'muted', 'line', 'ghost', 'accel', 'brake', 'surface']) C[k] = hex(cs.getPropertyValue('--' + k));
 }
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-const rgb = (c, al = 1) => `rgba(${c[0]},${c[1]},${c[2]},${al})`;
+const rgbCache = new Map();
+const rgb = (c, al = 1) => {
+  const key = `${c[0]},${c[1]},${c[2]},${al}`;
+  if (!rgbCache.has(key)) rgbCache.set(key, `rgba(${c[0]},${c[1]},${c[2]},${al})`);
+  return rgbCache.get(key);
+};
 const lineColor = u => mix(C.accel, C.brake, brakeAt(u));
 
 function resize() {
@@ -516,7 +526,7 @@ function resize() {
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   S.fit = null;
 }
-new ResizeObserver(resize).observe($('stage'));
+new ResizeObserver(resize).observe($('#stage'));
 
 /** 視点の回転（ヨー → ピッチ）。戻り値 [横, 縦, 手前度] */
 function rot(p) {
@@ -530,6 +540,7 @@ function rot(p) {
 }
 const N = 720;
 const US = Array.from({ length: N + 1 }, (_, i) => U0 + (U1 - U0) * i / N);
+const curveOrder = Array.from({ length: N }, (_, i) => i);
 const chartX0 = U0 - UC;                                // グラフ左端（いま）
 const chartTop = () => FSPAN * CH;
 
@@ -547,7 +558,7 @@ function computeFit(pts) {
     xmin = Math.min(xmin, p[0]); xmax = Math.max(xmax, p[0]); ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]);
   }
   const narrow = W < 560;
-  const padL = narrow ? 40 : 64, padR = (narrow ? 30 : 70) + (1 - smooth(m)) * (narrow ? 60 : 170), padT = $('note').hidden ? 70 : 112, padB = S.explore ? 92 : 40;
+  const padL = narrow ? 40 : 64, padR = (narrow ? 30 : 70) + (1 - smooth(m)) * (narrow ? 60 : 170), padT = $('#note').hidden ? 70 : 112, padB = S.explore ? 92 : 40;
   const z = Math.min((W - padL - padR) / Math.max(xmax - xmin, 1e-3), (H - padT - padB) / Math.max(ymax - ymin, 1e-3));
   return { z, cx: (xmin + xmax) / 2, cy: (ymin + ymax) / 2, ox: padL + (W - padL - padR) / 2, oy: padT + (H - padT - padB) / 2 };
 }
@@ -645,8 +656,7 @@ function draw(dt) {
     let dmin = 1e9, dmax = -1e9;
     for (const p of sp) { dmin = Math.min(dmin, p[2]); dmax = Math.max(dmax, p[2]); }
     const dr = Math.max(dmax - dmin, 1e-6);
-    const order = [...Array(N).keys()];
-    if (three > 0.02) order.sort((i, j) => (sp[i][2] + sp[i + 1][2]) - (sp[j][2] + sp[j + 1][2]));
+    const order = three > 0.02 ? curveOrder.slice().sort((i, j) => (sp[i][2] + sp[i + 1][2]) - (sp[j][2] + sp[j + 1][2])) : curveOrder;
     ctx.lineCap = 'round';
     for (const i of order) {
       const um = (US[i] + US[i + 1]) / 2;
@@ -712,32 +722,38 @@ function draw(dt) {
 
 /* ========= 右側パネルの更新 ========= */
 let pendAngle = 0;
+const phaseSteps = [...document.querySelectorAll('#phaseSteps li')];
+const colAccel = $('#colAccel');
+const colBrake = $('#colBrake');
+const colAdapt = $('#colAdapt');
+const phaseNow = $('#phaseNow');
+const phaseDesc = $('#phaseDesc');
+
 function updateSide(dt) {
   let o = 0;
   if (S.pendMode === 'swing') { S.pendT += dt; o = Math.cos(2 * Math.PI * S.pendT / 3.2); }
   else if (S.pendMode === 'head') o = opinionAt(S.head);
   const targetAng = o * 32;   // 正＝左（恩恵論）に振れる
   pendAngle += (targetAng - pendAngle) * (1 - Math.exp(-dt * 10));
-  $('pendArm').setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
+  $('#pendArm').setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
   const active = S.showCurve && S.scene >= 1;
   const ph = active ? phaseAt(S.head) : null;
-  const pn = $('phaseNow');
-  pn.textContent = ph ? PHASE_LABEL[ph] : '—';
-  pn.style.color = ph ? rgb(lineColor(S.head)) : '';
-  $('phaseDesc').textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
-  document.querySelectorAll('#phaseSteps li').forEach(li => li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel'))));
+  phaseNow.textContent = ph ? PHASE_LABEL[ph] : '—';
+  phaseNow.style.color = ph ? rgb(lineColor(S.head)) : '';
+  phaseDesc.textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
+  phaseSteps.forEach(li => li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel'))));
   // 一周の流れ：いまの局面の列を強調。加速では需要の3項目、再加速では「止まれない・戻れない」を中心に光らせる
   const accelOn = ph === 'accel' || ph === 'reaccel';
-  $('colAccel').classList.toggle('on', accelOn);
-  $('colBrake').classList.toggle('on', ph === 'brake');
-  $('colAdapt').classList.toggle('on', ph === 'adapt');
+  colAccel.classList.toggle('on', accelOn);
+  colBrake.classList.toggle('on', ph === 'brake');
+  colAdapt.classList.toggle('on', ph === 'adapt');
   document.querySelectorAll('#colAccel li').forEach(li => {
     const lock = li.dataset.k === 'lock';
     const hot = ph === 'accel' ? !lock : ph === 'reaccel' ? lock : false;
     li.classList.toggle('hot', hot);
     li.classList.toggle('dim', accelOn && !hot);
   });
-  if (!dragging) $('time').value = Math.round((S.head - U0) / (U1 - U0) * 1000);
+  if (!dragging) $('#time').value = Math.round((S.head - U0) / (U1 - U0) * 1000);
 }
 
 /* ========= 操作 ========= */
@@ -745,26 +761,27 @@ SCENES.forEach((sc, i) => {
   const b = document.createElement('button');
   b.type = 'button'; b.textContent = i + 1; b.setAttribute('aria-label', `場面${i + 1}：${sc.title}`);
   b.addEventListener('click', () => goScene(i));
-  $('dots').appendChild(b);
+  $('#dots').appendChild(b);
 });
-$('prev').addEventListener('click', () => goScene(S.scene - 1));
-$('next').addEventListener('click', () => goScene(S.scene + 1));
-function syncPlay() { const b = $('play'); b.textContent = S.playing ? '❚❚ 停止' : '▶ 再生'; b.setAttribute('aria-label', S.playing ? '停止' : '再生'); }
-function togglePlay() { if ($('play').disabled) return; if (S.playing) pauseHead(); else playHead(); }
-$('play').addEventListener('click', togglePlay);
+$('#prev').addEventListener('click', () => goScene(S.scene - 1));
+$('#next').addEventListener('click', () => goScene(S.scene + 1));
+function syncPlay() { const b = $('#play'); b.textContent = S.playing ? '❚❚ 停止' : '▶ 再生'; b.setAttribute('aria-label', S.playing ? '停止' : '再生'); }
+function togglePlay() { if ($('#play').disabled) return; if (S.playing) pauseHead(); else playHead(); }
+$('#play').addEventListener('click', togglePlay);
 let dragging = false;
-$('time').addEventListener('input', e => {
+$('#time').addEventListener('input', e => {
   dragging = true; pauseHead();
   S.head = U0 + (U1 - U0) * e.target.value / 1000;
 });
-$('time').addEventListener('change', () => { dragging = false; });
+$('#time').addEventListener('change', () => { dragging = false; });
 function syncViews() {
   document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
   const sc = S.explore && S.view === 'time';
-  $('stage').classList.toggle('scrub', sc);
-  $('hint').textContent = sc ? '曲線上の点を左右にドラッグ' : 'ドラッグで回転';
+  $('#stage').classList.toggle('scrub', sc);
+  $('#hint').textContent = sc ? '曲線上の点を左右にドラッグ' : 'ドラッグで回転';
 }
-document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => { setView(b.dataset.view, 1.4); showNote(b.dataset.view); syncViews(); }));
+const viewButtons = [...document.querySelectorAll('#views button')];
+viewButtons.forEach(b => b.addEventListener('click', () => { setView(b.dataset.view, 1.4); showNote(b.dataset.view); syncViews(); }));
 document.addEventListener('keydown', e => {
   if (e.target.matches('input[type=range]') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
   if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); goScene(S.scene + 1); }
@@ -792,18 +809,18 @@ cv.addEventListener('pointermove', e => {
   S.cam.yaw += (e.clientX - drag.x) * 0.01;
   S.cam.pitch = clamp(S.cam.pitch + (e.clientY - drag.y) * 0.008, 0, 89.5 * DEG);
   drag = { x: e.clientX, y: e.clientY };
-  S.view = ''; syncViews(); $('note').hidden = true;
+  S.view = ''; syncViews(); $('#note').hidden = true;
 });
 cv.addEventListener('pointerup', () => { drag = null; scrub = false; });
 cv.addEventListener('pointercancel', () => { drag = null; scrub = false; });
 // 全画面（使えない環境ではボタンを出さない）
 if (document.fullscreenEnabled) {
-  $('fs').hidden = false;
-  $('fs').addEventListener('click', () => {
-    const p = document.fullscreenElement ? document.exitFullscreen() : $('app').requestFullscreen();
+  $('#fs').hidden = false;
+  $('#fs').addEventListener('click', () => {
+    const p = document.fullscreenElement ? document.exitFullscreen() : $('#app').requestFullscreen();
     if (p && p.catch) p.catch(() => {});
   });
-  document.addEventListener('fullscreenchange', () => { $('fs').textContent = document.fullscreenElement ? '全画面を終了' : '全画面'; });
+  document.addEventListener('fullscreenchange', () => { $('#fs').textContent = document.fullscreenElement ? '全画面を終了' : '全画面'; });
 }
 // 配色の切り替えに追従
 readColors();
@@ -823,15 +840,16 @@ function loop(ts) {
     if (!tweens.some(t => t.obj === S && t.k === 'pt')) { S.playing = false; syncPlay(); }
   }
   const sc = SCENES[S.scene];
-  if ($('auto').checked && sc.dur && S.sceneT > sc.dur + 2.4 && S.scene < SCENES.length - 1) goScene(S.scene + 1);
+  if ($('#auto').checked && sc.dur && S.sceneT > sc.dur + 2.4 && S.scene < SCENES.length - 1) goScene(S.scene + 1);
   updateSide(dt);
   draw(dt);
   requestAnimationFrame(loop);
 }
-if (reduced) $('auto').checked = false;
+if (reduced) $('#auto').checked = false;
 const m0 = /^#scene([1-5])$/.exec(location.hash || '');
 goScene(m0 ? Number(m0[1]) - 1 : 0);
 requestAnimationFrame(loop);
+})();
 </script>
 
 </body>
