@@ -275,7 +275,7 @@ h1 .acc { color: var(--accel); }
     <div class="col brake" id="colBrake">
       <div class="col-head"><h3>ブレーキがかかる要因（例）</h3></div>
       <ul class="factors">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の制約</span><span class="s">インフラの限界が、導入ペースを落とす。</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">AIデータセンター用の電力や冷却水が確保できない。またはほかの用途や自然環境保護と競合する</span><span class="s">電力・冷却水の確保が難しく、他用途や自然保護との競合が起きる。</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="1.5"/><path d="M6 8V5h13v12h-3"/><path d="M7 12h7"/></svg><span class="t">制度や監査</span><span class="s">安全性や説明責任の要求が、普及の速度を抑える。</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 21v-3h2a2 2 0 0 0 2-2v-2.5l1.6-.7a.6.6 0 0 0 .2-1.1l-1.8-1.3V8.4a2.4 2.4 0 0 0-2.4-2.4H9.1A4.1 4.1 0 0 0 5 10.1V12a2 2 0 0 0 2 2h2v3"/><path d="M6 21v-3"/></svg><span class="t">信頼の揺らぎ</span><span class="s">失敗事例や誤解が広がると、社会的な反発が起きる。</span></li>
       </ul>
@@ -442,7 +442,6 @@ const SCENES = [
       tween(S.cam, { m: 1 }, 3.2, 0.4); tween(S.cam, { pitch: 0, yaw: 0 }, 1.2, 0.4); tween(S, { ref: 0 }, 0.4); } },
   { title: '見る角度で、二つの顔', dur: 11.6,
     cap: '真上から見ると、同じ循環をくり返しているように見える。',
-    // 前の場面の姿から、そのまま真上へ回り込む（途中で別の角度を挟まない）
     enter() { S.showCurve = true; S.pendMode = 'head'; pauseHead(); finishHead(); setView('top', 2.2); showNote('top');
       steps = [
         { at: 4.4, fn() { setView('side', 2.0); showNote('side'); setCap('真横から見ると、一周ごとに確実に高くなっている。'); } },
@@ -459,7 +458,6 @@ const $ = id => {
   return cache.get(id);
 };
 let capTimer = 0;
-/** 説明文を差し替え、少し遅らせて一文字ずつ表示する。「」��囲んだ語にはマーカーを引く */
 function setCap(t, delay = 450) {
   const el = $('#sceneCap');
   el.classList.remove('show');
@@ -589,14 +587,12 @@ function draw(dt) {
   ctx.clearRect(0, 0, W, H);
   const m = S.cam.m, flat = 1 - smooth(m), three = smooth(m);
 
-  // 曲線の投影
   const rp = US.map(u => rot(world(u, m)));
   const target = computeFit(rp);
   if (!S.fit) S.fit = target;
   else { const k = 1 - Math.exp(-dt * 9); for (const key of ['z', 'cx', 'cy', 'ox', 'oy']) S.fit[key] += (target[key] - S.fit[key]) * k; }
   const sp = rp.map(toScreen);
 
-  // ── 時間グラフの軸
   if (flat > 0.02) {
     const a = flat;
     const axB = W2S([chartX0 - 0.16, -0.44, 0]), axT = W2S([chartX0 - 0.16, chartTop() + 0.08, 0]), ax0 = W2S([chartX0 - 0.16, 0, 0]);
@@ -612,14 +608,12 @@ function draw(dt) {
     text('いま', st[0], st[1] + 18, { size: 13, color: C.muted, align: 'center', alpha: a });
   }
 
-  // ── 両論が描く未来（点線）
   const fa = S.futA * flat;
   if (fa > 0.02 && S.fut > 0) {
     const st = [chartX0, 0, 0];
     const lin = [chartX0 + 0.9, chartTop() * 1.02, 0];
     const e1 = [st[0] + (lin[0] - st[0]) * S.fut, st[1] + (lin[1] - st[1]) * S.fut, 0];
     line(W2S(st), W2S(e1), C.accel, 3, fa, [10, 8]);
-    // 破滅・断念：ベジェ曲線
     const P = [[chartX0, 0], [chartX0 + 0.45, 0.02], [chartX0 + 0.9, -0.03], [chartX0 + 1.55, -0.4]];
     const bez = t => { const s = 1 - t; return [0, 1].map(i => s * s * s * P[0][i] + 3 * s * s * t * P[1][i] + 3 * s * t * t * P[2][i] + t * t * t * P[3][i]); };
     ctx.strokeStyle = rgb(C.brake, fa); ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath();
@@ -636,7 +630,6 @@ function draw(dt) {
     }
   }
 
-  // ── 螺旋の中心軸と土台（奥側に描く）
   if (three > 0.05 && S.showCurve) {
     const a = three;
     const zc = -m / (2 * Math.PI);
@@ -651,7 +644,6 @@ function draw(dt) {
     }
   }
 
-  // ── 普及の軌道（奥から手前へ描く）
   if (S.showCurve) {
     let dmin = 1e9, dmax = -1e9;
     for (const p of sp) { dmin = Math.min(dmin, p[2]); dmax = Math.max(dmax, p[2]); }
@@ -661,14 +653,13 @@ function draw(dt) {
     for (const i of order) {
       const um = (US[i] + US[i + 1]) / 2;
       const on = US[i + 1] <= S.head + 1e-9;
-      const kk = ((sp[i][2] + sp[i + 1][2]) / 2 - dmin) / dr;        // 1＝手前
+      const kk = ((sp[i][2] + sp[i + 1][2]) / 2 - dmin) / dr;
       let col = on ? lineColor(um) : C.ghost;
       col = mix(C.stage, col, 1 - three * (1 - kk) * 0.62);
       ctx.strokeStyle = rgb(col);
       ctx.lineWidth = (on ? 6.5 : 4) * (1 - three) + (on ? 3.5 + 4.5 * kk : 2 + 2 * kk) * three;
       ctx.beginPath(); ctx.moveTo(sp[i][0], sp[i][1]); ctx.lineTo(sp[i + 1][0], sp[i + 1][1]); ctx.stroke();
     }
-    // 先頭の点
     const hp = toScreen(rot(world(S.head, m)));
     const hc = lineColor(S.head);
     const knob = S.explore && S.view === 'time' && m < 0.1;
@@ -691,7 +682,6 @@ function draw(dt) {
       }
     }
 
-    // 「後退しても、前の山より上で底打ち」
     const t2u = 2 - UP;
     const wantRef = flat > 0.5 && S.head >= t2u ? 1 : 0;
     S.ref += (wantRef - S.ref) * (1 - Math.exp(-dt * 4));
@@ -708,7 +698,6 @@ function draw(dt) {
     }
   }
 
-  // ── 画面幅が狭いときは、舞台の右上に小さな振り子を出す
   if (W < 700 && (S.scene >= 1 || S.pendMode === 'swing')) {
     const px = W - 74, py = 16, L = 30, ang = pendAngle * DEG;
     line([px - 16, py], [px + 16, py], C.ink, 2.5);
@@ -720,7 +709,6 @@ function draw(dt) {
   }
 }
 
-/* ========= 右側パネルの更新 ========= */
 let pendAngle = 0;
 const phaseSteps = [...document.querySelectorAll('#phaseSteps li')];
 const colAccel = $('#colAccel');
@@ -733,7 +721,7 @@ function updateSide(dt) {
   let o = 0;
   if (S.pendMode === 'swing') { S.pendT += dt; o = Math.cos(2 * Math.PI * S.pendT / 3.2); }
   else if (S.pendMode === 'head') o = opinionAt(S.head);
-  const targetAng = o * 32;   // 正＝左（恩恵論）に振れる
+  const targetAng = o * 32;
   pendAngle += (targetAng - pendAngle) * (1 - Math.exp(-dt * 10));
   $('#pendArm').setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
   const active = S.showCurve && S.scene >= 1;
@@ -742,7 +730,6 @@ function updateSide(dt) {
   phaseNow.style.color = ph ? rgb(lineColor(S.head)) : '';
   phaseDesc.textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
   phaseSteps.forEach(li => li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel'))));
-  // 一周の流れ：いまの局面の列を強調。加速では需要の3項目、再加速では「止まれない・戻れない」を中心に光らせる
   const accelOn = ph === 'accel' || ph === 'reaccel';
   colAccel.classList.toggle('on', accelOn);
   colBrake.classList.toggle('on', ph === 'brake');
@@ -756,7 +743,6 @@ function updateSide(dt) {
   if (!dragging) $('#time').value = Math.round((S.head - U0) / (U1 - U0) * 1000);
 }
 
-/* ========= 操作 ========= */
 SCENES.forEach((sc, i) => {
   const b = document.createElement('button');
   b.type = 'button'; b.textContent = i + 1; b.setAttribute('aria-label', `場面${i + 1}：${sc.title}`);
@@ -788,9 +774,7 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goScene(S.scene - 1); }
   else if (e.key === ' ' && !e.target.matches('button, input')) { e.preventDefault(); togglePlay(); }
 });
-// ドラッグで回転（場面6、螺旋表示のとき）
 let drag = null, scrub = false;
-/** ポインタの横位置から時間（u）を求めて先頭の点を動かす */
 function scrubTo(e) {
   const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
   const a = toScreen(rot(world(U0, S.cam.m)))[0], b = toScreen(rot(world(U1, S.cam.m)))[0];
@@ -813,7 +797,6 @@ cv.addEventListener('pointermove', e => {
 });
 cv.addEventListener('pointerup', () => { drag = null; scrub = false; });
 cv.addEventListener('pointercancel', () => { drag = null; scrub = false; });
-// 全画面（使えない環境ではボタンを出さない）
 if (document.fullscreenEnabled) {
   $('#fs').hidden = false;
   $('#fs').addEventListener('click', () => {
@@ -822,13 +805,11 @@ if (document.fullscreenEnabled) {
   });
   document.addEventListener('fullscreenchange', () => { $('#fs').textContent = document.fullscreenElement ? '全画面を終了' : '全画面'; });
 }
-// 配色の切り替えに追従
 readColors();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
 new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.fit = null; });
 
-/* ========= ループ ========= */
 let last = performance.now();
 function loop(ts) {
   const dt = Math.min((ts - last) / 1000, 0.1); last = ts; now += dt;
