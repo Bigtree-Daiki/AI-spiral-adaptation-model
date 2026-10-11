@@ -21,7 +21,7 @@ img { max-width: 100%; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Zen+Old+Mincho:wght@900&display=swap">
 <style>
 /* レイアウト：上に場面の見出しと説明（演出つき）、中央左に舞台、右に振り子と局面の細い列、
    舞台の下に操作バー、最下段に「一周の流れ」（加速→ブレーキ→適応）を横一列で並べる */
@@ -275,7 +275,7 @@ h1 .acc { color: var(--accel); }
     <div class="col brake" id="colBrake">
       <div class="col-head"><h3>ブレーキがかかる要因（例）</h3></div>
       <ul class="factors">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の奪い合い</span><span class="s">データセンターの電力や冷却水が、家庭の電気や農業・生活用水と競合する</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の奪い合い</span><span class="s">AIデータセンター用の電力や冷却水が確保できない。またはほかの用途や自然環境保護と競合する</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="1.5"/><path d="M6 8V5h13v12h-3"/><path d="M6 12h7M6 16h5"/></svg><span class="t">量的爆発による混乱</span><span class="s">AIが生む申請・取引・攻撃が、社会の処理能力を超える</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 21v-3h2a2 2 0 0 0 2-2v-2.5l1.6-.7a.6.6 0 0 0 .2-.9L19 9a7 7 0 1 0-12 5v7"/><path d="M9.5 10.5c.8-.8 1.7-.8 2.5 0s1.7.8 2.5 0"/></svg><span class="t">社会文化的な反発</span><span class="s">急進的なAI依存が、人間の発達や社会的関係を損なう</span></li>
       </ul>
@@ -357,6 +357,8 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ========= トゥイーン ========= */
 let tweens = [];
+let dirty = true;                                 // 次のフレームで描き直す必要があるか
+const markDirty = () => { dirty = true; };
 let now = 0;
 /** obj の各プロパティを dur 秒かけて to へ動かす */
 function tween(obj, props, dur, delay = 0, ease = easeIO) {
@@ -483,6 +485,7 @@ function goScene(i) {
   const st = $('sceneTitle'); st.textContent = sc.title; st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');
   setCap(sc.cap);
   sc.enter();
+  markDirty();
   if (reduced) { tweens.forEach(t => { t.obj[t.k] = t.to; }); tweens = []; steps.forEach(s => s.fn()); steps = []; S.playing = false; }
   $('stage').classList.toggle('explore', S.explore);
   $('views').hidden = !S.explore; $('hint').hidden = !S.explore;
@@ -503,6 +506,17 @@ function hex(c) { c = c.trim().replace('#', ''); if (c.length === 3) c = [...c].
 function readColors() {
   const cs = getComputedStyle(document.documentElement);
   for (const k of ['stage', 'ink', 'muted', 'line', 'ghost', 'accel', 'brake', 'surface']) C[k] = hex(cs.getPropertyValue('--' + k));
+  if (typeof SEG_B !== 'undefined') SEG_ON = SEG_B.map(b => mix(C.accel, C.brake, b));
+  STYLE_CACHE.clear();
+  markDirty();
+}
+/** 色の配列 → CSS文字列（同じ色は使い回す） */
+const STYLE_CACHE = new Map();
+function rgbStr(c) {
+  const k = (c[0] << 16) | (c[1] << 8) | c[2];
+  let v = STYLE_CACHE.get(k);
+  if (!v) { v = `rgb(${c[0]},${c[1]},${c[2]})`; STYLE_CACHE.set(k, v); }
+  return v;
 }
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const rgb = (c, al = 1) => `rgba(${c[0]},${c[1]},${c[2]},${al})`;
@@ -514,7 +528,7 @@ function resize() {
   W = r.width; H = r.height;
   CH = W / H < 1.1 ? 0.62 : W / H < 1.6 ? 0.45 : 0.34;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-  S.fit = null;
+  S.fit = null; PC.key = ''; FIT.key = ''; markDirty();
 }
 new ResizeObserver(resize).observe($('stage'));
 
@@ -532,9 +546,36 @@ const N = 720;
 const US = Array.from({ length: N + 1 }, (_, i) => U0 + (U1 - U0) * i / N);
 const chartX0 = U0 - UC;                                // グラフ左端（いま）
 const chartTop = () => FSPAN * CH;
+const SEG_B = Array.from({ length: N }, (_, i) => brakeAt((US[i] + US[i + 1]) / 2));   // 線分ごとのブレーキの強さ（固定）
+let SEG_ON = [];
+const IDX = Array.from({ length: N }, (_, i) => i);
+/** 曲線の投影（視点が変わったときだけ計算） */
+const PC = { key: '', rp: null, order: IDX, dmin: 0, dr: 1 };
+function projected() {
+  const c = S.cam, key = `${c.m.toFixed(5)}|${c.pitch.toFixed(5)}|${c.yaw.toFixed(5)}|${CH}`;
+  if (key !== PC.key) {
+    PC.key = key;
+    PC.rp = US.map(u => rot(world(u, c.m)));
+    let dmin = 1e9, dmax = -1e9;
+    for (const p of PC.rp) { if (p[2] < dmin) dmin = p[2]; if (p[2] > dmax) dmax = p[2]; }
+    PC.dmin = dmin; PC.dr = Math.max(dmax - dmin, 1e-6);
+    const rp = PC.rp;
+    PC.order = smooth(c.m) > 0.02 ? IDX.slice().sort((i, j) => (rp[i][2] + rp[i + 1][2]) - (rp[j][2] + rp[j + 1][2])) : IDX;
+  }
+  return PC;
+}
+/** 画面合わせの目標値（視点・画面・表示状態が変わったときだけ計算） */
+const FIT = { key: '', val: null };
 
 /** 画面に収まるよう、拡大率と中心を決める */
 function computeFit(pts) {
+  const key = `${PC.key}|${W}|${H}|${$('note').hidden}|${S.explore}`;
+  if (key === FIT.key) return FIT.val;
+  FIT.key = key;
+  FIT.val = computeFitRaw(pts);
+  return FIT.val;
+}
+function computeFitRaw(pts) {
   const m = S.cam.m;
   const extra = [];
   if (m < 0.5) {   // グラフの軸と両論の未来像も枠に入れる
@@ -543,9 +584,9 @@ function computeFit(pts) {
     extra.push(rot([0, -0.06, -m / (2 * Math.PI)]), rot([0, FSPAN * 0.16 + 0.16, -m / (2 * Math.PI)]));
   }
   let xmin = 1e9, xmax = -1e9, ymin = 1e9, ymax = -1e9;
-  for (const p of pts.concat(m < 0.5 ? extra.map(rot) : extra)) {
-    xmin = Math.min(xmin, p[0]); xmax = Math.max(xmax, p[0]); ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]);
-  }
+  const take = p => { if (p[0] < xmin) xmin = p[0]; if (p[0] > xmax) xmax = p[0]; if (p[1] < ymin) ymin = p[1]; if (p[1] > ymax) ymax = p[1]; };
+  for (const p of pts) take(p);
+  for (const p of (m < 0.5 ? extra.map(rot) : extra)) take(p);
   const narrow = W < 560;
   const padL = narrow ? 40 : 64, padR = (narrow ? 30 : 70) + (1 - smooth(m)) * (narrow ? 60 : 170), padT = $('note').hidden ? 70 : 112, padB = S.explore ? 92 : 40;
   const z = Math.min((W - padL - padR) / Math.max(xmax - xmin, 1e-3), (H - padT - padB) / Math.max(ymax - ymin, 1e-3));
@@ -578,12 +619,21 @@ function draw(dt) {
   ctx.clearRect(0, 0, W, H);
   const m = S.cam.m, flat = 1 - smooth(m), three = smooth(m);
 
-  // 曲線の投影
-  const rp = US.map(u => rot(world(u, m)));
-  const target = computeFit(rp);
-  if (!S.fit) S.fit = target;
-  else { const k = 1 - Math.exp(-dt * 9); for (const key of ['z', 'cx', 'cy', 'ox', 'oy']) S.fit[key] += (target[key] - S.fit[key]) * k; }
-  const sp = rp.map(toScreen);
+  // 曲線の投影（キャッシュ）と画面合わせ
+  const pc = projected();
+  const target = computeFit(pc.rp);
+  S.settling = false;
+  if (!S.fit) S.fit = { ...target };
+  else {
+    const k = 1 - Math.exp(-dt * 9);
+    for (const key of ['z', 'cx', 'cy', 'ox', 'oy']) {
+      const d = target[key] - S.fit[key];
+      S.fit[key] += d * k;
+      if (Math.abs(d * (key === 'z' ? 1 : S.fit.z)) > 0.05 || (key === 'z' && Math.abs(d) > 0.05)) S.settling = true;
+    }
+    if (!S.settling) Object.assign(S.fit, target);
+  }
+  const F = S.fit, sp = pc.rp.map(p => [F.ox + (p[0] - F.cx) * F.z, F.oy - (p[1] - F.cy) * F.z, p[2]]);
 
   // ── 時間グラフの軸
   if (flat > 0.02) {
@@ -642,22 +692,28 @@ function draw(dt) {
 
   // ── 普及の軌道（奥から手前へ描く）
   if (S.showCurve) {
-    let dmin = 1e9, dmax = -1e9;
-    for (const p of sp) { dmin = Math.min(dmin, p[2]); dmax = Math.max(dmax, p[2]); }
-    const dr = Math.max(dmax - dmin, 1e-6);
-    const order = [...Array(N).keys()];
-    if (three > 0.02) order.sort((i, j) => (sp[i][2] + sp[i + 1][2]) - (sp[j][2] + sp[j + 1][2]));
-    ctx.lineCap = 'round';
-    for (const i of order) {
-      const um = (US[i] + US[i + 1]) / 2;
+    const { order, dmin, dr } = pc;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    let curStyle = '', curW = -1, lastI = -2, open = false;
+    for (let n = 0; n < order.length; n++) {
+      const i = order[n];
       const on = US[i + 1] <= S.head + 1e-9;
-      const kk = ((sp[i][2] + sp[i + 1][2]) / 2 - dmin) / dr;        // 1＝手前
-      let col = on ? lineColor(um) : C.ghost;
-      col = mix(C.stage, col, 1 - three * (1 - kk) * 0.62);
-      ctx.strokeStyle = rgb(col);
-      ctx.lineWidth = (on ? 6.5 : 4) * (1 - three) + (on ? 3.5 + 4.5 * kk : 2 + 2 * kk) * three;
-      ctx.beginPath(); ctx.moveTo(sp[i][0], sp[i][1]); ctx.lineTo(sp[i + 1][0], sp[i + 1][1]); ctx.stroke();
+      // 手前度は16段階に丸め、同じ見た目の線分をまとめやすくする
+      const kk = three > 0.02 ? Math.round(((sp[i][2] + sp[i + 1][2]) / 2 - dmin) / dr * 16) / 16 : 1;
+      let col = on ? SEG_ON[i] : C.ghost;
+      if (three > 0.02) col = mix(C.stage, col, 1 - three * (1 - kk) * 0.62);
+      const style = rgbStr(col);
+      const w = Math.round(((on ? 6.5 : 4) * (1 - three) + (on ? 3.5 + 4.5 * kk : 2 + 2 * kk) * three) * 4) / 4;
+      if (style !== curStyle || w !== curW) {
+        if (open) ctx.stroke();
+        ctx.strokeStyle = style; ctx.lineWidth = w; ctx.beginPath();
+        curStyle = style; curW = w; open = true; lastI = -2;
+      }
+      if (i !== lastI + 1) ctx.moveTo(sp[i][0], sp[i][1]);
+      ctx.lineTo(sp[i + 1][0], sp[i + 1][1]);
+      lastI = i;
     }
+    if (open) ctx.stroke();
     // 先頭の点
     const hp = toScreen(rot(world(S.head, m)));
     const hc = lineColor(S.head);
@@ -685,6 +741,8 @@ function draw(dt) {
     const t2u = 2 - UP;
     const wantRef = flat > 0.5 && S.head >= t2u ? 1 : 0;
     S.ref += (wantRef - S.ref) * (1 - Math.exp(-dt * 4));
+    if (Math.abs(wantRef - S.ref) < 0.004) S.ref = wantRef;
+    S.refMoving = S.ref !== wantRef;
     if (S.ref > 0.02) {
       const a = S.ref * flat;
       const yP = (f(UP) - F0) * CH, yT = (f(t2u) - F0) * CH;
@@ -712,32 +770,50 @@ function draw(dt) {
 
 /* ========= 右側パネルの更新 ========= */
 let pendAngle = 0;
+const UI = {
+  pendArm: $('pendArm'), phaseNow: $('phaseNow'), phaseDesc: $('phaseDesc'), time: $('time'),
+  steps: [...$('phaseSteps').querySelectorAll('li[data-p]')],
+  colAccel: $('colAccel'), colBrake: $('colBrake'), colAdapt: $('colAdapt'),
+  accelItems: [...$('colAccel').querySelectorAll('li')],
+};
+const LAST = { ang: NaN, ph: undefined, color: '', tv: -1 };
+/** 振り子・局面・一周の流れ・時間スライダーを更新。戻り値：振り子がまだ動いているか */
 function updateSide(dt) {
   let o = 0;
   if (S.pendMode === 'swing') { S.pendT += dt; o = Math.cos(2 * Math.PI * S.pendT / 3.2); }
   else if (S.pendMode === 'head') o = opinionAt(S.head);
   const targetAng = o * 32;   // 正＝左（恩恵論）に振れる
   pendAngle += (targetAng - pendAngle) * (1 - Math.exp(-dt * 10));
-  $('pendArm').setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
-  const active = S.showCurve && S.scene >= 1;
-  const ph = active ? phaseAt(S.head) : null;
-  const pn = $('phaseNow');
-  pn.textContent = ph ? PHASE_LABEL[ph] : '—';
-  pn.style.color = ph ? rgb(lineColor(S.head)) : '';
-  $('phaseDesc').textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
-  document.querySelectorAll('#phaseSteps li').forEach(li => li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel'))));
-  // 一周の流れ：いまの局面の列を強調。加速では需要の3項目、再加速では「止まれない・戻れない」を中心に光らせる
-  const accelOn = ph === 'accel' || ph === 'reaccel';
-  $('colAccel').classList.toggle('on', accelOn);
-  $('colBrake').classList.toggle('on', ph === 'brake');
-  $('colAdapt').classList.toggle('on', ph === 'adapt');
-  document.querySelectorAll('#colAccel li').forEach(li => {
-    const lock = li.dataset.k === 'lock';
-    const hot = ph === 'accel' ? !lock : ph === 'reaccel' ? lock : false;
-    li.classList.toggle('hot', hot);
-    li.classList.toggle('dim', accelOn && !hot);
-  });
-  if (!dragging) $('time').value = Math.round((S.head - U0) / (U1 - U0) * 1000);
+  if (Math.abs(targetAng - pendAngle) < 0.01) pendAngle = targetAng;
+  if (Math.abs(pendAngle - LAST.ang) > 0.01 || isNaN(LAST.ang)) {
+    UI.pendArm.setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
+    LAST.ang = pendAngle;
+  }
+  const ph = S.showCurve && S.scene >= 1 ? phaseAt(S.head) : null;
+  if (ph !== LAST.ph) {
+    LAST.ph = ph;
+    UI.phaseNow.textContent = ph ? PHASE_LABEL[ph] : '—';
+    UI.phaseDesc.textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
+    for (const li of UI.steps) li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel')));
+    // 一周の流れ：いまの局面の列を強調。加速では需要の3項目、再加速では「止まれない・戻れない」を中心に光らせる
+    const accelOn = ph === 'accel' || ph === 'reaccel';
+    UI.colAccel.classList.toggle('on', accelOn);
+    UI.colBrake.classList.toggle('on', ph === 'brake');
+    UI.colAdapt.classList.toggle('on', ph === 'adapt');
+    for (const li of UI.accelItems) {
+      const lock = li.dataset.k === 'lock';
+      const hot = ph === 'accel' ? !lock : ph === 'reaccel' ? lock : false;
+      li.classList.toggle('hot', hot);
+      li.classList.toggle('dim', accelOn && !hot);
+    }
+  }
+  const color = ph ? rgbStr(lineColor(S.head)) : '';
+  if (color !== LAST.color) { UI.phaseNow.style.color = color; LAST.color = color; }
+  if (!dragging) {
+    const tv = Math.round((S.head - U0) / (U1 - U0) * 1000);
+    if (tv !== LAST.tv) { UI.time.value = tv; LAST.tv = tv; }
+  }
+  return S.pendMode === 'swing' || pendAngle !== targetAng;
 }
 
 /* ========= 操作 ========= */
@@ -756,6 +832,7 @@ let dragging = false;
 $('time').addEventListener('input', e => {
   dragging = true; pauseHead();
   S.head = U0 + (U1 - U0) * e.target.value / 1000;
+  markDirty();
 });
 $('time').addEventListener('change', () => { dragging = false; });
 function syncViews() {
@@ -764,7 +841,7 @@ function syncViews() {
   $('stage').classList.toggle('scrub', sc);
   $('hint').textContent = sc ? '曲線上の点を左右にドラッグ' : 'ドラッグで回転';
 }
-document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => { setView(b.dataset.view, 1.4); showNote(b.dataset.view); syncViews(); }));
+document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => { setView(b.dataset.view, 1.4); showNote(b.dataset.view); syncViews(); markDirty(); }));
 document.addEventListener('keydown', e => {
   if (e.target.matches('input[type=range]') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
   if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); goScene(S.scene + 1); }
@@ -774,28 +851,31 @@ document.addEventListener('keydown', e => {
 // ドラッグで回転（場面6、螺旋表示のとき）
 let drag = null, scrub = false;
 /** ポインタの横位置から時間（u）を求めて先頭の点を動かす */
+let cvRect = null;                                 // ドラッグ開始時に一度だけ取得
 function scrubTo(e) {
-  const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+  const r = cvRect || cv.getBoundingClientRect(), x = e.clientX - r.left;
   const a = toScreen(rot(world(U0, S.cam.m)))[0], b = toScreen(rot(world(U1, S.cam.m)))[0];
   S.head = clamp(U0 + (x - a) / (b - a) * (U1 - U0), U0, U1);
 }
 cv.addEventListener('pointerdown', e => {
   if (!S.explore) return;
+  cvRect = cv.getBoundingClientRect(); markDirty();
   if (S.view === 'time' && S.cam.m < 0.1) { scrub = true; cv.setPointerCapture(e.pointerId); pauseHead(); stopTween(S, 'head'); scrubTo(e); return; }
   if (S.cam.m < 0.9) return;
   drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId);
   stopTween(S.cam, 'yaw'); stopTween(S.cam, 'pitch');
 });
 cv.addEventListener('pointermove', e => {
-  if (scrub) { scrubTo(e); return; }
+  if (scrub) { scrubTo(e); markDirty(); return; }
   if (!drag) return;
   S.cam.yaw += (e.clientX - drag.x) * 0.01;
   S.cam.pitch = clamp(S.cam.pitch + (e.clientY - drag.y) * 0.008, 0, 89.5 * DEG);
   drag = { x: e.clientX, y: e.clientY };
-  S.view = ''; syncViews(); $('note').hidden = true;
+  S.view = ''; syncViews(); $('note').hidden = true; markDirty();
 });
-cv.addEventListener('pointerup', () => { drag = null; scrub = false; });
-cv.addEventListener('pointercancel', () => { drag = null; scrub = false; });
+const endPointer = () => { drag = null; scrub = false; cvRect = null; markDirty(); };
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
 // 全画面（使えない環境ではボタンを出さない）
 if (document.fullscreenEnabled) {
   $('fs').hidden = false;
@@ -809,7 +889,7 @@ if (document.fullscreenEnabled) {
 readColors();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
 new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.fit = null; });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.fit = null; markDirty(); });
 
 /* ========= ループ ========= */
 let last = performance.now();
@@ -824,8 +904,10 @@ function loop(ts) {
   }
   const sc = SCENES[S.scene];
   if ($('auto').checked && sc.dur && S.sceneT > sc.dur + 2.4 && S.scene < SCENES.length - 1) goScene(S.scene + 1);
-  updateSide(dt);
-  draw(dt);
+  // 動いているもの（トゥイーン・再生・ドラッグ・振り子・画面合わせ・注記のフェード）があるときだけ描画
+  const busy = dirty || tweens.length > 0 || S.playing || drag || scrub || S.settling || S.refMoving;
+  const pendMoving = updateSide(dt);
+  if (busy || pendMoving) { draw(dt); dirty = false; }
   requestAnimationFrame(loop);
 }
 if (reduced) $('auto').checked = false;
