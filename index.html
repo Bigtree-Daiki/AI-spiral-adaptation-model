@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>螺旋的適応モデル</title>
+<meta name="description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして螺旋。5つの場面と動かせる図で示す「螺旋的適応モデル」。">
+<!-- リンクカード（note・SNSで共有したときの表示） -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="螺旋的適応モデル｜AIの社会実装は、加速と減速を繰り返しながらも着実に進む">
+<meta property="og:description" content="AIの社会実装は、加速と減速を繰り返しながらも着実に進む。恩恵論と脅威論の間で揺れる世論、ブレーキと適応、そして螺旋。5つの場面と動かせる図で示す「螺旋的適応モデル」。">
+<meta property="og:url" content="https://bigtree-daiki.github.io/AI-spiral-adaptation-model/">
+<meta property="og:image" content="https://bigtree-daiki.github.io/AI-spiral-adaptation-model/ogp.png">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+/* 基本のリセット */
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font-size: 14px; }
+img { max-width: 100%; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@700;900&display=swap">
+<style>
+/* レイアウト：上に場面の見出しと説明（演出つき）、中央左に舞台、右に振り子と局面の細い列、
+   舞台の下に操作バー、最下段に「一周の流れ」（加速→ブレーキ→適応）を横一列で並べる */
+:root {
+  --bg: #F2F4F7;
+  --surface: #FFFFFF;
+  --stage: #FBFCFD;
+  --ink: #17212D;
+  --muted: #5A6577;
+  --line: #D8DEE6;
+  --ghost: #CDD4DD;
+  --accel: #1F63D6;      /* 加速・再加速 */
+  --brake: #D8432C;      /* ブレーキ（摩擦） */
+  --accel-soft: #E6EEFC;
+  --brake-soft: #FBE9E5;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  --font-display: "Zen Old Mincho", "Hiragino Mincho ProN", "Noto Serif JP", "Yu Mincho", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E131A; --surface: #151C26; --stage: #111821; --ink: #E7ECF2; --muted: #98A4B5;
+    --line: #283342; --ghost: #36414F; --accel: #5C9BFF; --brake: #FF6A50;
+    --accel-soft: #172941; --brake-soft: #3A1E1A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E131A; --surface: #151C26; --stage: #111821; --ink: #E7ECF2; --muted: #98A4B5;
+  --line: #283342; --ghost: #36414F; --accel: #5C9BFF; --brake: #FF6A50;
+  --accel-soft: #172941; --brake-soft: #3A1E1A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7; }
+.app { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 28px; display: flex; flex-direction: column; gap: 14px; }
+.app:fullscreen { max-width: none; background: var(--bg); padding-inline: 24px; padding-block: 16px; overflow: auto; }
+.app:fullscreen .top, .app:fullscreen .keys { display: none; }
+
+/* 見出し */
+.eyebrow { font-size: 12.5px; font-weight: 700; letter-spacing: .12em; color: var(--muted); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 3vw, 32px); line-height: 1.3; margin: 2px 0 0; text-wrap: balance; }
+h1 .acc { color: var(--accel); }
+
+/* 場面の見出しと説明：場面が変わるたびに、舞台の描画に続いて一文字ずつ現れる */
+.scene-head { display: flex; flex-direction: column; gap: 6px; }
+.scene-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.scene-no { font-size: 13px; font-weight: 900; color: var(--surface); background: var(--ink); padding: 2px 10px; border-radius: 999px; letter-spacing: .06em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scene-title { font-size: clamp(20px, 2.4vw, 26px); font-weight: 900; margin: 0; line-height: 1.35; }
+.scene-cap { margin: 0; font-size: clamp(17px, 1.9vw, 22px); font-weight: 700; line-height: 1.65; max-width: 52em; text-wrap: pretty; min-height: 3.3em; }
+.scene-cap .c { opacity: 0; display: inline; }
+.scene-cap.show .c { animation: charIn .32s ease-out forwards; animation-delay: calc(var(--i) * 22ms + 80ms); }
+.scene-cap .mark { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accel) 22%, transparent) 62%) no-repeat; background-size: 0% 100%; }
+.scene-cap.show .mark { animation: markIn .9s ease-out forwards; animation-delay: var(--md, .9s); }
+.scene-title.pop { animation: titleIn .45s ease-out both; }
+@keyframes charIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes markIn { to { background-size: 100% 100%; } }
+@keyframes titleIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* 本体 */
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 16px; align-items: stretch; }
+.left { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.stage { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 14px; height: clamp(300px, calc(100vh - 580px), 620px); overflow: hidden; }
+.app:fullscreen .stage { height: clamp(300px, calc(100vh - 450px), 820px); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+.stage.explore canvas { touch-action: none; cursor: grab; }
+.stage.explore canvas:active { cursor: grabbing; }
+.stage.explore.scrub canvas, .stage.explore.scrub canvas:active { cursor: ew-resize; }
+.note { position: absolute; left: 16px; top: 14px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; max-width: calc(100% - 32px); }
+.note .k { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.note .v { display: block; font-size: clamp(16px, 2vw, 20px); font-weight: 900; line-height: 1.4; }
+.views { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 24px); }
+.views button { font: inherit; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.views button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.hint { position: absolute; right: 14px; bottom: 16px; font-size: 12px; color: var(--muted); }
+
+/* 右の細い列：振り子と局面 */
+.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; transition: background .4s, border-color .4s, box-shadow .4s; }
+.panel h3 { margin: 0 0 6px; font-size: clamp(16px, 1.7vw, 20px); font-weight: 900; color: var(--muted); letter-spacing: .02em; line-height: 1.4; }
+/* 右の列：1枚のパネル。上に小さめの振り子、下に縦に広い「いまの局面」 */
+.side { position: relative; }
+.sidecard { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 0; overflow: hidden; }  /* 高さは左の列（図＋操作バー）に合わせる */
+.pend-area { padding: 10px 14px 4px; border-radius: 12px 12px 0 0; transition: background .4s, box-shadow .4s; }
+.pend { display: block; width: 100%; max-width: 300px; height: auto; margin: 0 auto; }
+.phase-area { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 14px 10px; border-top: 1px solid var(--line); min-height: 0; }
+.phase-desc { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.6; min-height: 1.6em; }
+/* 局面の4段階：パネル内のカードとして縦に並べ、間に下向き矢印。文字は中央ぞろえ。
+   画面の高さに応じて大きさを調整し、どの画面でもパネル内に収める */
+.phase-steps { list-style: none; margin: 4px 0 0; padding: 0; flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; align-items: stretch; gap: 0; }
+.phase-steps li[data-p] { --c: var(--accel); display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: clamp(15px, 1.9vh, 20px); font-weight: 900; line-height: 1.3; color: var(--muted);
+  padding: clamp(3px, .7vh, 9px) 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  transition: background .3s, color .3s, border-color .3s; }
+.phase-steps li[data-p="brake"] { --c: var(--brake); }
+.phase-steps li[data-p="adapt"] { --c: color-mix(in srgb, var(--accel) 50%, var(--brake)); }
+.phase-steps li.now { color: #fff; background: var(--c); border-color: var(--c); }
+.phase-steps .dot { display: none; }
+.phase-steps li.arr { display: flex; justify-content: center; color: var(--muted); line-height: 0; padding: 1px 0; }
+.phase-steps li.arr svg { width: clamp(14px, 1.9vh, 20px); height: clamp(14px, 1.9vh, 20px); opacity: .75; }
+/* 高さの低い画面：局面名は強調カードで分かるので大きな表示と説明を省き、振り子も少し小さくする */
+@media (min-width: 861px) and (max-height: 960px) { .phase-desc, .phase-now { display: none; } }
+/* さらに低い画面では、パネルを図の高さに縛らず中身に合わせて伸ばす（切れないことを優先） */
+@media (min-width: 861px) and (max-height: 820px) { .sidecard { position: static; height: 100%; } }
+.phase-now { white-space: nowrap; font-size: 24px; font-weight: 900; line-height: 1.3; min-height: 1.3em; transition: color .3s; }
+/* 場面2：世論の振り子を強調 */
+.pend-area.focus { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accel) 50%, var(--brake)); }
+.panel.focus, .pend-area.focus { background: color-mix(in srgb, var(--accel-soft) 50%, var(--brake-soft)); border-color: color-mix(in srgb, var(--accel) 50%, var(--brake)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accel) 22%, transparent), 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent); }
+.panel.focus h3, .pend-area.focus h3 { color: var(--ink); }
+.pend-area.focus { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accel) 50%, var(--brake)); }
+
+/* 一周の流れ：加速 → ブレーキ → 適応 →（再加速へ） */
+.cycle { display: grid; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr); align-items: stretch; }
+.cycle .arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 18px; font-weight: 900; }
+.col { --c: var(--accel); --soft: var(--accel-soft); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; opacity: .6; transition: opacity .35s, background .35s, border-color .35s, box-shadow .35s; min-width: 0; }
+.col.brake { --c: var(--brake); --soft: var(--brake-soft); }
+.col.adapt { --c: color-mix(in srgb, var(--accel) 50%, var(--brake)); --soft: color-mix(in srgb, var(--accel-soft) 50%, var(--brake-soft)); }
+.col.on { opacity: 1; background: var(--soft); border-color: color-mix(in srgb, var(--c) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 14%, transparent); }
+.col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.col-head h3 { margin: 0; font-size: clamp(16px, 1.7vw, 20px); font-weight: 900; line-height: 1.4; color: var(--c); display: flex; align-items: center; gap: 8px; }
+.col-head h3::before { content: ""; width: 18px; height: 6px; border-radius: 3px; background: var(--c); }
+.col.adapt .col-head h3::before { background: linear-gradient(90deg, var(--brake), var(--accel)); }
+.col-head .loop { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.factors { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.factors li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 0 8px; align-items: start; padding: 5px 6px; border-radius: 8px; color: var(--c); transition: background .3s, opacity .3s; }
+.factors li svg { width: 20px; height: 20px; margin-top: 2px; }
+.factors .t { font-weight: 900; font-size: 14px; line-height: 1.45; color: var(--ink); }
+.factors .s { grid-column: 2; font-size: 12.5px; color: var(--muted); line-height: 1.5; display: none; }
+.col.on .factors .s { display: block; }
+.col.on .factors li.dim { opacity: .62; }
+.col.on .factors li.dim .s { display: none; }
+.col.on .factors li.hot { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 6px; background: var(--ink); color: var(--surface); margin-left: 4px; vertical-align: 1px; }
+
+/* 操作バー */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.btn { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.btn:disabled { opacity: .4; cursor: default; }
+.dots { display: flex; gap: 6px; }
+.dots button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; }
+.dots button[aria-current="step"] { background: var(--accel); border-color: var(--accel); color: #fff; }
+.timeline { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 0; }
+.timeline label { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.timeline input { flex: 1; min-width: 0; accent-color: var(--accel); }
+.toggle { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.keys { font-size: 12px; color: var(--muted); margin: 0; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accel) 60%, transparent); outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .stage { height: clamp(320px, 54vh, 500px); }
+  .side { display: block; }
+  .sidecard { position: static; }
+  .cycle { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .cycle .arrow { display: none; }
+  .col:not(.on) .factors { display: none; }
+  .col:not(.on) .col-head { margin-bottom: 0; }
+  .scene-cap { min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  .scene-cap .c { opacity: 1; animation: none !important; }
+  .scene-cap .mark { background-size: 100% 100%; animation: none !important; }
+  .scene-title.pop { animation: none; }
+}
+</style>
+
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <p class="eyebrow">螺旋的適応モデル</p>
+    <h1>AIの社会実装は、加速と減速を繰り返しながらも<span class="acc">着実に進む</span></h1>
+  </div>
+
+  <div class="scene-head" aria-live="polite">
+    <div class="scene-row">
+      <span class="scene-no" id="sceneNo">場面 1 / 6</span>
+      <h2 class="scene-title" id="sceneTitle">二つの未来像</h2>
+    </div>
+    <p class="scene-cap" id="sceneCap"></p>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="stage" id="stage">
+        <canvas id="cv" aria-label="普及の軌道と螺旋の図"></canvas>
+        <div class="note" id="note" hidden><span class="k" id="noteK"></span><span class="v" id="noteV"></span></div>
+        <div class="views" id="views" hidden>
+          <button type="button" data-view="time" id="v-time">時間で展開</button>
+          <button type="button" data-view="top" id="v-top">真上から</button>
+          <button type="button" data-view="side" id="v-side">真横から</button>
+        </div>
+        <span class="hint" id="hint" hidden>ドラッグで回転</span>
+      </div>
+      <div class="controls">
+        <button type="button" class="btn" id="prev" aria-label="前の場面">‹ 前へ</button>
+        <div class="dots" id="dots" role="group" aria-label="場面"></div>
+        <button type="button" class="btn primary" id="next" aria-label="次の場面">次へ ›</button>
+        <div class="timeline">
+          <button type="button" class="btn" id="play" aria-label="再生">▶ 再生</button>
+          <label for="time">時間</label>
+          <input type="range" id="time" min="0" max="1000" value="0" aria-label="時間">
+        </div>
+        <label class="toggle" for="auto"><input type="checkbox" id="auto"> 自動で進む</label>
+        <button type="button" class="btn" id="fs" hidden>全画面</button>
+      </div>
+    </div>
+
+    <aside class="side">
+      <section class="panel sidecard">
+        <div class="pend-area" id="pendPanel">
+          <h3>世論の振り子</h3>
+          <svg class="pend" viewBox="0 0 260 120" aria-hidden="true">
+            <line x1="100" y1="14" x2="160" y2="14" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+            <path d="M84 98 Q130 120 176 98" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="4 5"/>
+            <g id="pendArm">
+              <line x1="130" y1="14" x2="130" y2="92" stroke="var(--ink)" stroke-width="2.5"/>
+              <circle cx="130" cy="98" r="11" fill="var(--ink)"/>
+            </g>
+            <text x="2" y="70" font-size="26" font-weight="900" fill="var(--accel)" font-family="var(--font-body)">恩恵論</text>
+            <text x="258" y="70" font-size="26" font-weight="900" fill="var(--brake)" text-anchor="end" font-family="var(--font-body)">脅威論</text>
+          </svg>
+        </div>
+        <div class="phase-area">
+          <h3>いまの局面</h3>
+          <div class="phase-now" id="phaseNow">—</div>
+          <p class="phase-desc" id="phaseDesc">軌道が動き出すと表示される</p>
+          <ol class="phase-steps" id="phaseSteps" aria-label="一周の局面">
+            <li data-p="accel"><span class="dot"></span>加速</li>
+            <li class="arr" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 1v9M2.5 6.5 6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+            <li data-p="brake"><span class="dot"></span>ブレーキ</li>
+            <li class="arr" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M6 1v9M2.5 6.5 6 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+            <li data-p="adapt"><span class="dot"></span>適応</li>
+          </ol>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="cycle" aria-label="一周の流れ">
+    <div class="col accel" id="colAccel">
+      <div class="col-head"><h3>加速・再加速の要因（例）</h3></div>
+      <ul class="factors">
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M3 20a5 5 0 0 1 10 0"/><circle cx="17" cy="15" r="2.5"/><path d="M17 10.5v1.5M17 18v1.5M21.5 15H20M14 15h-1.5"/></svg><span class="t">人手不足と複雑化への対処</span><span class="s">減りゆく人手で、複雑になった社会を回し続ける</span></li>
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span class="t">成長の追求</span><span class="s">生産性を引き上げ、新しい需要を生み出す</span></li>
+        <li data-k="demand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/><path d="M11 8v6M8 11h6"/></svg><span class="t">未知の領域への挑戦</span><span class="s">人の認知が届かない科学の難問を解く</span></li>
+        <li data-k="lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span class="t">止まれない・戻れない</span><span class="s">他者が使う限り降りられず（囚人のジレンマ）、一度慣れた便利さは手放せない（ラチェット効果）</span></li>
+      </ul>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="col brake" id="colBrake">
+      <div class="col-head"><h3>ブレーキがかかる要因（例）</h3></div>
+      <ul class="factors">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span class="t">電力・水資源の奪い合い</span><span class="s">データセンターの電力や冷却水が、家庭の電気や農業・生活用水と競合する</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="13" height="12" rx="1.5"/><path d="M6 8V5h13v12h-3"/><path d="M6 12h7M6 16h5"/></svg><span class="t">量的爆発による混乱</span><span class="s">AIが生む申請・取引・攻撃が、社会の処理能力を超える</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M15 21v-3h2a2 2 0 0 0 2-2v-2.5l1.6-.7a.6.6 0 0 0 .2-.9L19 9a7 7 0 1 0-12 5v7"/><path d="M9.5 10.5c.8-.8 1.7-.8 2.5 0s1.7.8 2.5 0"/></svg><span class="t">社会文化的な反発</span><span class="s">急進的なAI依存が、人間の発達や社会的関係を損なう</span></li>
+      </ul>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="col adapt" id="colAdapt">
+      <div class="col-head"><h3>適応の経路</h3><span class="loop">↺ 再加速へ</span></div>
+      <ul class="factors">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span class="t">技術進展による効率化</span><span class="s">小型化・省電力化で、負荷そのものを下げる</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></svg><span class="t">規制強化・ルール整備</span><span class="s">制度によって、使い方に枠をはめる</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg><span class="t">社会の慣れによる受容</span><span class="s">好・悪両面の影響を、新たな常態として受け入れる</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="keys">キーボード：← → で場面を移動、スペースで再生・停止。URLの末尾に #scene2 のように付けると、その場面から始まります。</p>
+</div>
+
+<script>
+/* ========= モデル：普及の軌道 =========
+   u：周回の位置（1周＝1.0）。f(u)=u+a·sin(2πu) が普及の深さ。
+   山の直後に一時的に下がり、谷は必ず前の山より高い。 */
+const A = 0.45;
+const UP = Math.acos(-1 / (2 * Math.PI * A)) / (2 * Math.PI); // 周回内の山の位置（≒0.31）
+const AD = 0.8125;                                           // 適応の終わり
+const U0 = -UP, U1 = 2.25, UC = 1.42;                        // 開始＝谷、終了＝上昇中、巻き取りの中心（摩擦〜適応が手前に来る）
+const f = u => u + A * Math.sin(2 * Math.PI * u);
+const F0 = f(U0), FSPAN = f(U1) - F0;
+let CH = 0.34;                                               // 時間グラフの縦の倍率（縦長の画面では大きく）
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
+const easeIO = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const DEG = Math.PI / 180;
+
+/** ブレーキの強さ（0＝加速、1＝ブレーキ、その間＝適応のグラデーション） */
+function brakeAt(u) {
+  if (u < 0) return 0;
+  const fr = u - Math.floor(u);
+  if (fr < UP - 0.05) return 0;
+  if (fr < UP + 0.02) return smooth((fr - (UP - 0.05)) / 0.07);
+  if (fr < 0.5) return 1;
+  if (fr < AD) return 1 - smooth((fr - 0.5) / (AD - 0.5));
+  return 0;
+}
+/** 局面の名前 */
+function phaseAt(u) {
+  if (u < 0) return 'accel';
+  const fr = u - Math.floor(u);
+  if (fr >= UP && fr < 0.5) return 'brake';
+  if (fr >= 0.5 && fr < AD) return 'adapt';
+  return u < AD ? 'accel' : 'reaccel';
+}
+const PHASE_DESC = { accel: '実装が広がり、普及が進む', brake: '反発と規制で、普及が一時後退する', adapt: '技術・制度・慣れで立て直す', reaccel: 'もう戻れないまま、再び普及が進む' };
+const PHASE_LABEL = { accel: '加速', reaccel: '再加速', brake: 'ブレーキ（摩擦）', adapt: '適応（立て直し）' };
+/** 世論：+1＝恩恵論、−1＝脅威論 */
+const opinionAt = u => Math.cos(2 * Math.PI * u);
+
+/** 世界座標。m=0 で時間に沿った平面グラフ、m=1 で螺旋（長さを保ったまま巻き取る） */
+function world(u, m) {
+  const hs = CH + (0.16 - CH) * m;
+  const y = (f(u) - F0) * hs;
+  if (m < 1e-4) return [u - UC, y, 0];
+  const r = 1 / (2 * Math.PI * m), th = 2 * Math.PI * m * (u - UC);
+  return [r * Math.sin(th), y, -r * (1 - Math.cos(th))];
+}
+
+/* ========= 状態 ========= */
+const S = {
+  scene: 0, sceneT: 0,
+  cam: { m: 0, pitch: 0, yaw: 0 },
+  head: U0, showCurve: false,
+  fut: 0, futA: 1, futX: 0,       // 両論の未来像：描画進捗・不透明度・✕表示
+  ref: 0,                         // 「前の山より上」注記の不透明度
+  pendMode: 'rest', pendT: 0,
+  playing: false, explore: false, view: 'time',
+  fit: null,
+};
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ========= トゥイーン ========= */
+let tweens = [];
+let now = 0;
+/** obj の各プロパティを dur 秒かけて to へ動かす */
+function tween(obj, props, dur, delay = 0, ease = easeIO) {
+  for (const k of Object.keys(props)) {
+    tweens = tweens.filter(t => !(t.obj === obj && t.k === k));
+    if (reduced || dur <= 0) { if (delay <= 0 || reduced) { obj[k] = props[k]; continue; } }
+    tweens.push({ obj, k, from: null, to: props[k], start: now + delay, dur: Math.max(dur, 1e-3), ease });
+  }
+}
+function stopTween(obj, k) { tweens = tweens.filter(t => !(t.obj === obj && t.k === k)); }
+function runTweens() {
+  tweens = tweens.filter(t => {
+    if (now < t.start) return true;
+    if (t.from === null) t.from = t.obj[t.k];
+    const p = clamp((now - t.start) / t.dur);
+    t.obj[t.k] = t.from + (t.to - t.from) * t.ease(p);
+    return p < 1;
+  });
+}
+const VIEWS = {
+  time:    { m: 0, pitch: 0,      yaw: 0, k: '時間で展開すると', v: '一時的に後退しながら、上昇していく' },
+  oblique: { m: 1, pitch: 22 * DEG, yaw: 0, k: '斜めから見ると', v: '回りながら、下から上へ昇る' },
+  top:     { m: 1, pitch: 89.5 * DEG, yaw: 0, k: '真上から見ると', v: '同じ循環をくり返す' },
+  side:    { m: 1, pitch: 0,      yaw: 0, k: '真横から見ると', v: '一周ごとに高くなる' },
+};
+function setView(name, dur = 1.6, delay = 0) {
+  const v = VIEWS[name]; S.view = name;
+  tween(S.cam, { m: v.m, pitch: v.pitch, yaw: v.yaw }, dur, delay);
+}
+/** 再生：先頭位置を U1 まで動かす */
+const PLAY_SEC = 30;                                          // 等速なら軌道を端から端までたどる秒数
+// 局面ごとの速さのメリハリ：加速・再加速は 0.8 倍の時間（速く）、ブレーキは 1.5 倍の時間（ゆっくり）
+const PACE = { accel: 0.8, reaccel: 0.8, brake: 1.5, adapt: 1.0 };
+const TN = 1200, TU = [], TT = [];                            // u と経過秒数の対応表
+(() => {
+  let acc = 0;
+  for (let i = 0; i <= TN; i++) {
+    const u = U0 + (U1 - U0) * i / TN;
+    if (i > 0) acc += PACE[phaseAt(u - (U1 - U0) / TN / 2)] * PLAY_SEC / TN;
+    TU.push(u); TT.push(acc);
+  }
+})();
+const PLAY_TOTAL = TT[TN];
+/** u → 経過秒数 */
+function timeOfU(u) { const i = clamp(Math.round((u - U0) / (U1 - U0) * TN), 0, TN); return TT[i]; }
+/** 経過秒数 → u（対応表を線形補間） */
+function uOfTime(t) {
+  if (t <= 0) return U0; if (t >= PLAY_TOTAL) return U1;
+  let lo = 0, hi = TN;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (TT[m] < t) lo = m; else hi = m; }
+  const k = (t - TT[lo]) / Math.max(TT[hi] - TT[lo], 1e-9);
+  return TU[lo] + (TU[hi] - TU[lo]) * k;
+}
+/** 再生：経過秒数 pt を一定の速さで進め、u に変換して先頭の点を動かす */
+function playHead(_unused, delay = 0) {
+  if (S.head >= U1 - 1e-3) S.head = U0;
+  stopTween(S, 'head');
+  S.pt = timeOfU(S.head);
+  tween(S, { pt: PLAY_TOTAL }, PLAY_TOTAL - S.pt, delay, p => p);
+  S.playing = true; syncPlay();
+}
+function pauseHead() { stopTween(S, 'pt'); S.playing = false; syncPlay(); }
+function finishHead(d = 0.8) { if (S.head < U1 - 1e-3) tween(S, { head: U1 }, d, 0, p => p); }
+
+/* ========= 場面 ========= */
+let steps = [];
+const SCENES = [
+  { title: '二つの未来と揺れる世論', dur: 10.3,
+    cap: 'AIの未来は、恩恵論が描く「直線的な加速」か、脅威論が描く「破滅・断念」か、という両極端で語られがちである。',
+    enter() { setView('time', 0.8); S.showCurve = false; S.futX = 0; S.fut = 0; tween(S, { futA: 1, ref: 0 }, 0.4); tween(S, { fut: 1 }, 2.4, 0.3); S.pendMode = 'rest';
+      // 未来像を描き終えたら、世論の振り子へ注目を移す
+      steps = [
+        { at: 6.5, fn() { S.pendMode = 'swing'; S.pendT = 0; $('pendPanel').classList.add('focus'); tween(S, { futA: 0.55 }, 0.6);
+          setCap('世論は恩恵論と脅威論の間を振り子のように行き来しており、どちらか一方に落ち着くことはない。'); } },
+      ]; } },
+  { title: '実際の軌道', dur: PLAY_TOTAL + 1.5,
+    cap: '人手不足や成長の要請に押されて、AIの実装は加速する。だが世論が脅威論に振れるとブレーキがかかり、普及は一時的に後退する。それでも技術進展や規制強化、あるいは単なる受容といった適応過程を経て、再び加速する。',
+    enter() { setView('time', 0.8); S.showCurve = true; S.futX = 1; tween(S, { fut: 1, futA: 0.4 }, 0.6); S.ref = 0; S.head = U0; playHead(PLAY_SEC, 0.6); S.pendMode = 'head'; } },
+  { title: '巻き取ると、螺旋になる', dur: 5,
+    cap: '時間に沿って伸ばした軌道を巻き取ると、下から上へ回りながら昇る螺旋が現れる。',
+    enter() { S.showCurve = true; S.pendMode = 'head'; pauseHead(); finishHead(); S.view = 'side';
+      tween(S.cam, { m: 1 }, 3.2, 0.4); tween(S.cam, { pitch: 0, yaw: 0 }, 1.2, 0.4); tween(S, { ref: 0 }, 0.4); } },
+  { title: '見る角度で、二つの顔', dur: 11.6,
+    cap: '真上から見ると、同じ循環をくり返しているように見える。',
+    // 前の場面の姿から、そのまま真上へ回り込む（途中で別の角度を挟まない）
+    enter() { S.showCurve = true; S.pendMode = 'head'; pauseHead(); finishHead(); setView('top', 2.2); showNote('top');
+      steps = [
+        { at: 4.4, fn() { setView('side', 2.0); showNote('side'); setCap('真横から見ると、一周ごとに確実に高くなっている。'); } },
+        { at: 8.6, fn() { setView('oblique', 1.8); showNote('oblique', '加速と減速を繰り返しながら、着実に進む'); setCap('二つの顔を合わせると、「加速と減速を繰り返しながらも着実に進む」姿になる。'); } },
+      ]; } },
+  { title: '自分で動かして確かめる', dur: 0,
+    cap: '「時間で展開」では、曲線上の点を左右にドラッグして時間を動かせる。「真上から」「真横から」の図はドラッグで回せる。',
+    enter() { S.showCurve = true; S.pendMode = 'head'; S.explore = true; pauseHead(); tween(S, { head: U0 + 0.12 }, 0.8); setView('time', 1); showNote('time'); } },
+];
+
+const $ = id => document.getElementById(id);
+let capTimer = 0;
+/** 説明文を差し替え、少し遅らせて一文字ずつ表示する。「」で囲んだ語にはマーカーを引く */
+function setCap(t, delay = 450) {
+  const el = $('sceneCap');
+  el.classList.remove('show');
+  el.textContent = '';
+  let i = 0, inMark = null;
+  for (const ch of t) {
+    if (ch === '「') { inMark = document.createElement('span'); inMark.className = 'mark'; el.appendChild(inMark); }
+    const sp = document.createElement('span');
+    sp.className = 'c'; sp.style.setProperty('--i', i++); sp.textContent = ch;
+    (inMark || el).appendChild(sp);
+    if (ch === '」' && inMark) { inMark.style.setProperty('--md', (i * 22 + 300) + 'ms'); inMark = null; }
+  }
+  el.querySelectorAll('.mark').forEach(m => { if (!m.style.getPropertyValue('--md')) m.style.setProperty('--md', (i * 22 + 300) + 'ms'); });
+  clearTimeout(capTimer);
+  void el.offsetWidth;
+  capTimer = setTimeout(() => el.classList.add('show'), reduced ? 0 : delay);
+}
+function showNote(view, override) {
+  const v = VIEWS[view]; $('noteK').textContent = v.k; $('noteV').textContent = override || v.v; $('note').hidden = false;
+}
+function goScene(i) {
+  i = clamp(i, 0, SCENES.length - 1);
+  S.scene = i; S.sceneT = 0; steps = []; S.explore = false; $('note').hidden = true;
+  const sc = SCENES[i];
+  $('sceneNo').textContent = `場面 ${i + 1} / ${SCENES.length}`;
+  const st = $('sceneTitle'); st.textContent = sc.title; st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');
+  setCap(sc.cap);
+  sc.enter();
+  if (reduced) { tweens.forEach(t => { t.obj[t.k] = t.to; }); tweens = []; steps.forEach(s => s.fn()); steps = []; S.playing = false; }
+  $('stage').classList.toggle('explore', S.explore);
+  $('views').hidden = !S.explore; $('hint').hidden = !S.explore;
+  [...$('dots').children].forEach((b, k) => b.setAttribute('aria-current', k === i ? 'step' : 'false'));
+  $('pendPanel').classList.remove('focus');
+  $('prev').disabled = i === 0; $('next').disabled = i === SCENES.length - 1;
+  const timeOn = i >= 1; $('time').disabled = !timeOn; $('play').disabled = !timeOn;
+  syncViews(); syncPlay();
+  try { history.replaceState(null, '', '#scene' + (i + 1)); } catch (e) {}
+}
+
+/* ========= 描画 ========= */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+let C = {};
+const FONT = '"Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif';
+function hex(c) { c = c.trim().replace('#', ''); if (c.length === 3) c = [...c].map(x => x + x).join(''); return [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16)); }
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['stage', 'ink', 'muted', 'line', 'ghost', 'accel', 'brake', 'surface']) C[k] = hex(cs.getPropertyValue('--' + k));
+}
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const rgb = (c, al = 1) => `rgba(${c[0]},${c[1]},${c[2]},${al})`;
+const lineColor = u => mix(C.accel, C.brake, brakeAt(u));
+
+function resize() {
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  CH = W / H < 1.1 ? 0.62 : W / H < 1.6 ? 0.45 : 0.34;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  S.fit = null;
+}
+new ResizeObserver(resize).observe($('stage'));
+
+/** 視点の回転（ヨー → ピッチ）。戻り値 [横, 縦, 手前度] */
+function rot(p) {
+  const cam = S.cam;
+  const tz = -cam.m / (2 * Math.PI);
+  const x = p[0], y = p[1], z = p[2] - tz;
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+  const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  return [x1, y * cp - z1 * sp, y * sp + z1 * cp];
+}
+const N = 720;
+const US = Array.from({ length: N + 1 }, (_, i) => U0 + (U1 - U0) * i / N);
+const chartX0 = U0 - UC;                                // グラフ左端（いま）
+const chartTop = () => FSPAN * CH;
+
+/** 画面に収まるよう、拡大率と中心を決める */
+function computeFit(pts) {
+  const m = S.cam.m;
+  const extra = [];
+  if (m < 0.5) {   // グラフの軸と両論の未来像も枠に入れる
+    extra.push([chartX0 - 0.16, -0.46, 0], [chartX0 - 0.16, chartTop() + 0.1, 0], [U1 - UC + 0.05, 0, 0]);
+  } else {
+    extra.push(rot([0, -0.06, -m / (2 * Math.PI)]), rot([0, FSPAN * 0.16 + 0.16, -m / (2 * Math.PI)]));
+  }
+  let xmin = 1e9, xmax = -1e9, ymin = 1e9, ymax = -1e9;
+  for (const p of pts.concat(m < 0.5 ? extra.map(rot) : extra)) {
+    xmin = Math.min(xmin, p[0]); xmax = Math.max(xmax, p[0]); ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]);
+  }
+  const narrow = W < 560;
+  const padL = narrow ? 40 : 64, padR = (narrow ? 30 : 70) + (1 - smooth(m)) * (narrow ? 60 : 170), padT = $('note').hidden ? 70 : 112, padB = S.explore ? 92 : 40;
+  const z = Math.min((W - padL - padR) / Math.max(xmax - xmin, 1e-3), (H - padT - padB) / Math.max(ymax - ymin, 1e-3));
+  return { z, cx: (xmin + xmax) / 2, cy: (ymin + ymax) / 2, ox: padL + (W - padL - padR) / 2, oy: padT + (H - padT - padB) / 2 };
+}
+function toScreen(p) { const F = S.fit; return [F.ox + (p[0] - F.cx) * F.z, F.oy - (p[1] - F.cy) * F.z, p[2]]; }
+
+function text(str, x, y, { size = 14, weight = 700, color = C.ink, align = 'left', base = 'middle', alpha = 1, halo = true } = {}) {
+  ctx.font = `${weight} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = base;
+  if (halo) { ctx.lineWidth = 5; ctx.strokeStyle = rgb(C.stage, alpha); ctx.lineJoin = 'round'; ctx.strokeText(str, x, y); }
+  ctx.fillStyle = rgb(color, alpha); ctx.fillText(str, x, y);
+}
+function arrowHead(x1, y1, x2, y2, color, size = 10, alpha = 1) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.fillStyle = rgb(color, alpha); ctx.beginPath();
+  ctx.moveTo(x2 + Math.cos(a) * size * 0.4, y2 + Math.sin(a) * size * 0.4);
+  ctx.lineTo(x2 - Math.cos(a - 0.45) * size, y2 - Math.sin(a - 0.45) * size);
+  ctx.lineTo(x2 - Math.cos(a + 0.45) * size, y2 - Math.sin(a + 0.45) * size);
+  ctx.closePath(); ctx.fill();
+}
+function line(a, b, color, w = 2, alpha = 1, dash = null) {
+  ctx.strokeStyle = rgb(color, alpha); ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]);
+}
+const W2S = p => toScreen(rot(p));
+
+function draw(dt) {
+  if (!W || !C.ink) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const m = S.cam.m, flat = 1 - smooth(m), three = smooth(m);
+
+  // 曲線の投影
+  const rp = US.map(u => rot(world(u, m)));
+  const target = computeFit(rp);
+  if (!S.fit) S.fit = target;
+  else { const k = 1 - Math.exp(-dt * 9); for (const key of ['z', 'cx', 'cy', 'ox', 'oy']) S.fit[key] += (target[key] - S.fit[key]) * k; }
+  const sp = rp.map(toScreen);
+
+  // ── 時間グラフの軸
+  if (flat > 0.02) {
+    const a = flat;
+    const axB = W2S([chartX0 - 0.16, -0.44, 0]), axT = W2S([chartX0 - 0.16, chartTop() + 0.08, 0]), ax0 = W2S([chartX0 - 0.16, 0, 0]);
+    line(ax0, axT, C.accel, 3, a); arrowHead(ax0[0], ax0[1], axT[0], axT[1], C.accel, 12, a);
+    line(ax0, axB, C.brake, 3, a); arrowHead(ax0[0], ax0[1], axB[0], axB[1], C.brake, 12, a);
+    text('社会実装の拡大・深化', axT[0] - 6, axT[1] - 18, { size: 14, weight: 900, color: C.accel, align: 'left', alpha: a });
+    text('後退', axB[0], axB[1] + 18, { size: 15, weight: 900, color: C.brake, align: 'center', alpha: a });
+    const bEnd = W2S([U1 - UC + 0.05, 0, 0]);
+    line(ax0, bEnd, C.muted, 1.5, a * 0.8, [5, 6]);
+    text('時間 →', bEnd[0], bEnd[1] + 16, { size: 13, color: C.muted, align: 'right', alpha: a });
+    const st = W2S([chartX0, 0, 0]);
+    ctx.fillStyle = rgb(C.ink, a); ctx.beginPath(); ctx.arc(st[0], st[1], 5, 0, Math.PI * 2); ctx.fill();
+    text('いま', st[0], st[1] + 18, { size: 13, color: C.muted, align: 'center', alpha: a });
+  }
+
+  // ── 両論が描く未来（点線）
+  const fa = S.futA * flat;
+  if (fa > 0.02 && S.fut > 0) {
+    const st = [chartX0, 0, 0];
+    const lin = [chartX0 + 0.9, chartTop() * 1.02, 0];
+    const e1 = [st[0] + (lin[0] - st[0]) * S.fut, st[1] + (lin[1] - st[1]) * S.fut, 0];
+    line(W2S(st), W2S(e1), C.accel, 3, fa, [10, 8]);
+    // 破滅・断念：ベジェ曲線
+    const P = [[chartX0, 0], [chartX0 + 0.45, 0.02], [chartX0 + 0.9, -0.03], [chartX0 + 1.55, -0.4]];
+    const bez = t => { const s = 1 - t; return [0, 1].map(i => s * s * s * P[0][i] + 3 * s * s * t * P[1][i] + 3 * s * t * t * P[2][i] + t * t * t * P[3][i]); };
+    ctx.strokeStyle = rgb(C.brake, fa); ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const q = bez(S.fut * i / 40), s2 = W2S([q[0], q[1], 0]); i ? ctx.lineTo(s2[0], s2[1]) : ctx.moveTo(s2[0], s2[1]); }
+    ctx.stroke(); ctx.setLineDash([]);
+    if (S.fut > 0.98) {
+      const la = fa * smooth((S.fut - 0.98) / 0.02 + 0.5);
+      const x = S.futX ? ' ✕' : '';
+      const p1 = W2S(lin), p2 = W2S([P[3][0], P[3][1], 0]);
+      text('直線的な加速' + x, p1[0] + 12, p1[1] - 2, { size: W < 560 ? 13 : 16, weight: 900, color: C.accel, alpha: la });
+      text('恩恵論が描く未来', p1[0] + 12, p1[1] + 19, { size: 12.5, weight: 700, color: C.muted, alpha: la });
+      text('破滅・断念' + x, p2[0] + 12, p2[1] - 2, { size: W < 560 ? 13 : 16, weight: 900, color: C.brake, alpha: la });
+      text('脅威論が描く未来', p2[0] + 12, p2[1] + 19, { size: 12.5, weight: 700, color: C.muted, alpha: la });
+    }
+  }
+
+  // ── 螺旋の中心軸と土台（奥側に描く）
+  if (three > 0.05 && S.showCurve) {
+    const a = three;
+    const zc = -m / (2 * Math.PI);
+    const r = 1 / (2 * Math.PI * Math.max(m, 0.2));
+    ctx.strokeStyle = rgb(C.muted, 0.5 * a); ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]); ctx.beginPath();
+    for (let i = 0; i <= 64; i++) { const th = i / 64 * Math.PI * 2; const s2 = W2S([r * Math.sin(th), 0, zc + r * Math.cos(th)]); i ? ctx.lineTo(s2[0], s2[1]) : ctx.moveTo(s2[0], s2[1]); }
+    ctx.stroke(); ctx.setLineDash([]);
+    const b = W2S([0, -0.04, zc]), t2 = W2S([0, FSPAN * 0.16 + 0.13, zc]);
+    if (Math.hypot(t2[0] - b[0], t2[1] - b[1]) > 30) {
+      line(b, t2, C.muted, 2, 0.45 * a); arrowHead(b[0], b[1], t2[0], t2[1], C.muted, 11, 0.6 * a);
+      text('社会実装の拡大・深化', t2[0] + 10, t2[1] - 4, { size: 13.5, weight: 900, color: C.ink, alpha: a });
+    }
+  }
+
+  // ── 普及の軌道（奥から手前へ描く）
+  if (S.showCurve) {
+    let dmin = 1e9, dmax = -1e9;
+    for (const p of sp) { dmin = Math.min(dmin, p[2]); dmax = Math.max(dmax, p[2]); }
+    const dr = Math.max(dmax - dmin, 1e-6);
+    const order = [...Array(N).keys()];
+    if (three > 0.02) order.sort((i, j) => (sp[i][2] + sp[i + 1][2]) - (sp[j][2] + sp[j + 1][2]));
+    ctx.lineCap = 'round';
+    for (const i of order) {
+      const um = (US[i] + US[i + 1]) / 2;
+      const on = US[i + 1] <= S.head + 1e-9;
+      const kk = ((sp[i][2] + sp[i + 1][2]) / 2 - dmin) / dr;        // 1＝手前
+      let col = on ? lineColor(um) : C.ghost;
+      col = mix(C.stage, col, 1 - three * (1 - kk) * 0.62);
+      ctx.strokeStyle = rgb(col);
+      ctx.lineWidth = (on ? 6.5 : 4) * (1 - three) + (on ? 3.5 + 4.5 * kk : 2 + 2 * kk) * three;
+      ctx.beginPath(); ctx.moveTo(sp[i][0], sp[i][1]); ctx.lineTo(sp[i + 1][0], sp[i + 1][1]); ctx.stroke();
+    }
+    // 先頭の点
+    const hp = toScreen(rot(world(S.head, m)));
+    const hc = lineColor(S.head);
+    const knob = S.explore && S.view === 'time' && m < 0.1;
+    if (S.head >= U1 - 1e-3 && !knob) {
+      const pp = toScreen(rot(world(U1 - 0.03, m)));
+      arrowHead(pp[0], pp[1], hp[0], hp[1], hc, 18);
+    } else {
+      ctx.fillStyle = rgb(hc, 0.18); ctx.beginPath(); ctx.arc(hp[0], hp[1], knob ? 22 : 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = rgb(hc); ctx.beginPath(); ctx.arc(hp[0], hp[1], knob ? 12 : 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = rgb(C.stage); ctx.lineWidth = knob ? 3.5 : 2.5; ctx.stroke();
+      if (knob) {
+        text('◀', hp[0] - 34, hp[1] + 1, { size: 13, color: C.muted, align: 'center' });
+        text('▶', hp[0] + 34, hp[1] + 1, { size: 13, color: C.muted, align: 'center' });
+        if (!scrub) text('ドラッグ', hp[0], hp[1] + 34, { size: 12.5, color: C.muted, align: 'center' });
+      }
+      if (S.head > U0 + 0.02) {
+        const ph = phaseAt(S.head);
+        const lab = ph === 'brake' ? 'ブレーキ' : ph === 'adapt' ? '適応' : PHASE_LABEL[ph];
+        text(lab, hp[0] + 14, hp[1] - 20, { size: 15, weight: 900, color: hc });
+      }
+    }
+
+    // 「後退しても、前の山より上で底打ち」
+    const t2u = 2 - UP;
+    const wantRef = flat > 0.5 && S.head >= t2u ? 1 : 0;
+    S.ref += (wantRef - S.ref) * (1 - Math.exp(-dt * 4));
+    if (S.ref > 0.02) {
+      const a = S.ref * flat;
+      const yP = (f(UP) - F0) * CH, yT = (f(t2u) - F0) * CH;
+      const L = W2S([UP - UC, yP, 0]), R = W2S([t2u - UC + 0.1, yP, 0]), T = W2S([t2u - UC + 0.1, yT, 0]);
+      line(L, R, C.muted, 1.5, a, [3, 6]);
+      line(R, T, C.ink, 2.5, a); arrowHead(R[0], R[1], T[0], T[1], C.ink, 10, a);
+      text('後退しても、', R[0] + 12, (R[1] + T[1]) / 2 - 10, { size: 13.5, weight: 900, color: C.ink, alpha: a });
+      text('前の山より上で底打ち', R[0] + 12, (R[1] + T[1]) / 2 + 10, { size: 13.5, weight: 900, color: C.ink, alpha: a });
+      const pk = W2S([UP - UC, yP, 0]);
+      text('前の山', pk[0], pk[1] - 16, { size: 12.5, color: C.muted, align: 'center', alpha: a });
+    }
+  }
+
+  // ── 画面幅が狭いときは、舞台の右上に小さな振り子を出す
+  if (W < 700 && (S.scene >= 1 || S.pendMode === 'swing')) {
+    const px = W - 74, py = 16, L = 30, ang = pendAngle * DEG;
+    line([px - 16, py], [px + 16, py], C.ink, 2.5);
+    const bx = px - Math.sin(ang) * L, by = py + Math.cos(ang) * L;
+    line([px, py], [bx, by], C.ink, 2);
+    ctx.fillStyle = rgb(C.ink); ctx.beginPath(); ctx.arc(bx, by, 5.5, 0, Math.PI * 2); ctx.fill();
+    text('恩恵論', px - 30, py + 46, { size: 11.5, weight: 900, color: C.accel, align: 'center' });
+    text('脅威論', px + 30, py + 46, { size: 11.5, weight: 900, color: C.brake, align: 'center' });
+  }
+}
+
+/* ========= 右側パネルの更新 ========= */
+let pendAngle = 0;
+function updateSide(dt) {
+  let o = 0;
+  if (S.pendMode === 'swing') { S.pendT += dt; o = Math.cos(2 * Math.PI * S.pendT / 3.2); }
+  else if (S.pendMode === 'head') o = opinionAt(S.head);
+  const targetAng = o * 32;   // 正＝左（恩恵論）に振れる
+  pendAngle += (targetAng - pendAngle) * (1 - Math.exp(-dt * 10));
+  $('pendArm').setAttribute('transform', `rotate(${pendAngle.toFixed(2)} 130 14)`);
+  const active = S.showCurve && S.scene >= 1;
+  const ph = active ? phaseAt(S.head) : null;
+  const pn = $('phaseNow');
+  pn.textContent = ph ? PHASE_LABEL[ph] : '—';
+  pn.style.color = ph ? rgb(lineColor(S.head)) : '';
+  $('phaseDesc').textContent = ph ? PHASE_DESC[ph] : '軌道が動き出すと表示される';
+  document.querySelectorAll('#phaseSteps li').forEach(li => li.classList.toggle('now', !!ph && (li.dataset.p === ph || (li.dataset.p === 'accel' && ph === 'reaccel'))));
+  // 一周の流れ：いまの局面の列を強調。加速では需要の3項目、再加速では「止まれない・戻れない」を中心に光らせる
+  const accelOn = ph === 'accel' || ph === 'reaccel';
+  $('colAccel').classList.toggle('on', accelOn);
+  $('colBrake').classList.toggle('on', ph === 'brake');
+  $('colAdapt').classList.toggle('on', ph === 'adapt');
+  document.querySelectorAll('#colAccel li').forEach(li => {
+    const lock = li.dataset.k === 'lock';
+    const hot = ph === 'accel' ? !lock : ph === 'reaccel' ? lock : false;
+    li.classList.toggle('hot', hot);
+    li.classList.toggle('dim', accelOn && !hot);
+  });
+  if (!dragging) $('time').value = Math.round((S.head - U0) / (U1 - U0) * 1000);
+}
+
+/* ========= 操作 ========= */
+SCENES.forEach((sc, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = i + 1; b.setAttribute('aria-label', `場面${i + 1}：${sc.title}`);
+  b.addEventListener('click', () => goScene(i));
+  $('dots').appendChild(b);
+});
+$('prev').addEventListener('click', () => goScene(S.scene - 1));
+$('next').addEventListener('click', () => goScene(S.scene + 1));
+function syncPlay() { const b = $('play'); b.textContent = S.playing ? '❚❚ 停止' : '▶ 再生'; b.setAttribute('aria-label', S.playing ? '停止' : '再生'); }
+function togglePlay() { if ($('play').disabled) return; if (S.playing) pauseHead(); else playHead(); }
+$('play').addEventListener('click', togglePlay);
+let dragging = false;
+$('time').addEventListener('input', e => {
+  dragging = true; pauseHead();
+  S.head = U0 + (U1 - U0) * e.target.value / 1000;
+});
+$('time').addEventListener('change', () => { dragging = false; });
+function syncViews() {
+  document.querySelectorAll('#views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
+  const sc = S.explore && S.view === 'time';
+  $('stage').classList.toggle('scrub', sc);
+  $('hint').textContent = sc ? '曲線上の点を左右にドラッグ' : 'ドラッグで回転';
+}
+document.querySelectorAll('#views button').forEach(b => b.addEventListener('click', () => { setView(b.dataset.view, 1.4); showNote(b.dataset.view); syncViews(); }));
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input[type=range]') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); goScene(S.scene + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goScene(S.scene - 1); }
+  else if (e.key === ' ' && !e.target.matches('button, input')) { e.preventDefault(); togglePlay(); }
+});
+// ドラッグで回転（場面6、螺旋表示のとき）
+let drag = null, scrub = false;
+/** ポインタの横位置から時間（u）を求めて先頭の点を動かす */
+function scrubTo(e) {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
+  const a = toScreen(rot(world(U0, S.cam.m)))[0], b = toScreen(rot(world(U1, S.cam.m)))[0];
+  S.head = clamp(U0 + (x - a) / (b - a) * (U1 - U0), U0, U1);
+}
+cv.addEventListener('pointerdown', e => {
+  if (!S.explore) return;
+  if (S.view === 'time' && S.cam.m < 0.1) { scrub = true; cv.setPointerCapture(e.pointerId); pauseHead(); stopTween(S, 'head'); scrubTo(e); return; }
+  if (S.cam.m < 0.9) return;
+  drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId);
+  stopTween(S.cam, 'yaw'); stopTween(S.cam, 'pitch');
+});
+cv.addEventListener('pointermove', e => {
+  if (scrub) { scrubTo(e); return; }
+  if (!drag) return;
+  S.cam.yaw += (e.clientX - drag.x) * 0.01;
+  S.cam.pitch = clamp(S.cam.pitch + (e.clientY - drag.y) * 0.008, 0, 89.5 * DEG);
+  drag = { x: e.clientX, y: e.clientY };
+  S.view = ''; syncViews(); $('note').hidden = true;
+});
+cv.addEventListener('pointerup', () => { drag = null; scrub = false; });
+cv.addEventListener('pointercancel', () => { drag = null; scrub = false; });
+// 全画面（使えない環境ではボタンを出さない）
+if (document.fullscreenEnabled) {
+  $('fs').hidden = false;
+  $('fs').addEventListener('click', () => {
+    const p = document.fullscreenElement ? document.exitFullscreen() : $('app').requestFullscreen();
+    if (p && p.catch) p.catch(() => {});
+  });
+  document.addEventListener('fullscreenchange', () => { $('fs').textContent = document.fullscreenElement ? '全画面を終了' : '全画面'; });
+}
+// 配色の切り替えに追従
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { S.fit = null; });
+
+/* ========= ループ ========= */
+let last = performance.now();
+function loop(ts) {
+  const dt = Math.min((ts - last) / 1000, 0.1); last = ts; now += dt;
+  S.sceneT += dt;
+  for (const s of steps) if (!s.done && S.sceneT >= s.at) { s.done = true; s.fn(); }
+  runTweens();
+  if (S.playing) {
+    S.head = uOfTime(S.pt);
+    if (!tweens.some(t => t.obj === S && t.k === 'pt')) { S.playing = false; syncPlay(); }
+  }
+  const sc = SCENES[S.scene];
+  if ($('auto').checked && sc.dur && S.sceneT > sc.dur + 2.4 && S.scene < SCENES.length - 1) goScene(S.scene + 1);
+  updateSide(dt);
+  draw(dt);
+  requestAnimationFrame(loop);
+}
+const m0 = /^#scene([1-5])$/.exec(location.hash || '');
+goScene(m0 ? Number(m0[1]) - 1 : 0);
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
